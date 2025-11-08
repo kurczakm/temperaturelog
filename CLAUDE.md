@@ -24,15 +24,6 @@ Key relationships:
 Backend application is provided in Java 21. It uses Spring Boot, Hibernate, and JWT for authentication.
 Frontend application is provided in Angular 20.
 
-### Backend Structure
-- `entity/` - JPA entities (User, Role)
-- `repository/` - Spring Data JPA repositories
-- `service/` - Business logic (AuthService, CustomUserDetailsService)
-- `controller/` - REST API controllers (AuthController at `/api/auth`)
-- `security/` - JWT utilities and authentication filter
-- `dto/` - Data transfer objects for API requests/responses
-- `config/` - Spring Security configuration with role-based access control
-
 ## Development Commands
 
 ### Backend
