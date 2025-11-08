@@ -23,7 +23,7 @@ docker compose exec -T db psql -U postgres < db_init.sql
 
 3. Create a test user (optional - for development):
 ```bash
-docker compose exec db psql -U postgres -c "INSERT INTO users (username, password_hash, role_id) VALUES ('admin', '\$2a\$10\$XPT0CQjJj.9Y8Y9gL0Y0P.Y9Y9Y9Y9Y9Y9Y9Y9Y9Y9Y9Y9Y9Y', 1);"
+docker compose exec db psql -U postgres -c "INSERT INTO users (username, password_hash, role_id) VALUES ('admin', '\$2a\$12\$wCX./O3aQ9ykOW6.jdegVeCXgycH9282o3RHuMGPI.Xm4HB8B1jEe', 1);"
 ```
 
 Note: The password hash above is for 'password123' (BCrypt encoded). For production, generate proper hashes.
