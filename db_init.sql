@@ -14,10 +14,7 @@ CREATE TABLE series (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     description TEXT,
-    min_value NUMERIC(5,2) NOT NULL,
-    max_value NUMERIC(5,2) NOT NULL,
     color VARCHAR(20),
-    icon VARCHAR(50),
     created_by INT REFERENCES users(id),
     created_at TIMESTAMP DEFAULT NOW()
 );
