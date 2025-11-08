@@ -1,0 +1,115 @@
+<div class="signin-container">
+  <a href="#username" class="skip-link">Skip to sign-in form</a>
+  <main class="signin-card" aria-labelledby="signin-title">
+    <header class="signin-header">
+      <div class="logo">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+          <rect x="8" y="12" width="32" height="24" rx="2" stroke="currentColor" stroke-width="2"/>
+          <path d="M16 20 L24 28 L32 20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h1 id="signin-title">Temperature Tracking System</h1>
+      <p class="subtitle">Sign in to your account</p>
+    </header>
+
+    <form [formGroup]="signInForm" (ngSubmit)="onSubmit()" class="signin-form" aria-labelledby="signin-title">
+      @if (errorMessage()) {
+        <div class="error-message" role="alert" aria-live="assertive" aria-atomic="true">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+            <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2"/>
+            <path d="M10 6 L10 11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="10" cy="14" r="1" fill="currentColor"/>
+          </svg>
+          <span>{{ errorMessage() }}</span>
+        </div>
+      }
+
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input
+          id="username"
+          type="text"
+          formControlName="username"
+          placeholder="Enter your username"
+          autocomplete="username"
+          [class.invalid]="username?.invalid && username?.touched"
+          [attr.aria-invalid]="username?.invalid && username?.touched"
+          [attr.aria-describedby]="username?.invalid && username?.touched ? 'username-error' : null"
+        />
+        @if (username?.invalid && username?.touched) {
+          <span class="field-error" id="username-error" role="alert">
+            @if (username?.errors?.['required']) {
+              Username is required
+            }
+            @if (username?.errors?.['minlength']) {
+              Username must be at least 3 characters
+            }
+          </span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="password-input-wrapper">
+          <input
+            id="password"
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            placeholder="Enter your password"
+            autocomplete="current-password"
+            [class.invalid]="password?.invalid && password?.touched"
+            [attr.aria-invalid]="password?.invalid && password?.touched"
+            [attr.aria-describedby]="password?.invalid && password?.touched ? 'password-error' : null"
+          />
+          <button
+            type="button"
+            class="toggle-password"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+            [attr.aria-pressed]="showPassword()"
+          >
+            @if (showPassword()) {
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                <path d="M2 2 L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M9 5.5 C9.33 5.47 9.66 5.45 10 5.45 C14.45 5.45 17.73 8.82 18.82 10 C18.23 10.84 17.4 11.88 16.36 12.82 M5.64 7.18 C4.6 8.12 3.77 9.16 3.18 10 C4.27 11.18 7.55 14.55 10 14.55 C10.91 14.55 11.75 14.36 12.5 14.05" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M10 7.27 C11.51 7.27 12.73 8.49 12.73 10 C12.73 10.55 12.59 11.06 12.34 11.51" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            } @else {
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                <path d="M10 5.45 C14.45 5.45 17.73 8.82 18.82 10 C17.73 11.18 14.45 14.55 10 14.55 C5.55 14.55 2.27 11.18 1.18 10 C2.27 8.82 5.55 5.45 10 5.45 Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                <circle cx="10" cy="10" r="2.73" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            }
+          </button>
+        </div>
+        @if (password?.invalid && password?.touched) {
+          <span class="field-error" id="password-error" role="alert">
+            @if (password?.errors?.['required']) {
+              Password is required
+            }
+            @if (password?.errors?.['minlength']) {
+              Password must be at least 6 characters
+            }
+          </span>
+        }
+      </div>
+
+      <button
+        type="submit"
+        class="signin-button"
+        [disabled]="isLoading()"
+      >
+        @if (isLoading()) {
+          <span class="spinner"></span>
+          <span>Signing in...</span>
+        } @else {
+          <span>Sign In</span>
+        }
+      </button>
+    </form>
+
+    <div class="signin-footer">
+      <p>Default credentials: admin / password123</p>
+    </div>
+  </main>
+</div>
