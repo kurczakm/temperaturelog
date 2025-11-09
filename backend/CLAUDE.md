@@ -24,3 +24,9 @@ Response includes:
 - `username`: Authenticated user's username
 - `role`: User's role (ADMIN or USER)
 - `expiresIn`: Token expiration time in milliseconds
+
+## Requirements
+
+- Java 21,
+To run the application, you have to export the `JAVA_HOME` environment variable to the path of your JDK.
+Run command `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64/` to set the environment variable before running the application.
