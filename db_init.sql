@@ -15,6 +15,10 @@ CREATE TABLE series (
     name VARCHAR(100) NOT NULL,
     description TEXT,
     color VARCHAR(20),
+    icon VARCHAR(50),
+    -- Min/max values allow up to 3 integer digits and 2 decimal places (e.g., 999.99), matching measurement value precision
+    min_value NUMERIC(5,2),
+    max_value NUMERIC(5,2),
     created_by INT REFERENCES users(id),
     created_at TIMESTAMP DEFAULT NOW()
 );
@@ -22,7 +26,7 @@ CREATE TABLE series (
 CREATE TABLE measurements (
     id SERIAL PRIMARY KEY,
     series_id INT REFERENCES series(id) ON DELETE CASCADE,
-    value NUMERIC(5,2) NOT NULL,
+    value NUMERIC(6,2) NOT NULL,
     timestamp TIMESTAMP NOT NULL,
     created_by INT REFERENCES users(id),
     created_at TIMESTAMP DEFAULT NOW()
