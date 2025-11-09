@@ -62,6 +62,9 @@ class SeriesServiceTest {
         testSeries.setName("Temperature Series");
         testSeries.setDescription("Test series for temperature measurements");
         testSeries.setColor("#FF5733");
+        testSeries.setIcon("thermometer");
+        testSeries.setMinValue(new java.math.BigDecimal("-10.00"));
+        testSeries.setMaxValue(new java.math.BigDecimal("50.00"));
         testSeries.setCreatedBy(testUser);
         testSeries.setCreatedAt(LocalDateTime.now());
 
@@ -70,6 +73,9 @@ class SeriesServiceTest {
         testRequest.setName("Temperature Series");
         testRequest.setDescription("Test series for temperature measurements");
         testRequest.setColor("#FF5733");
+        testRequest.setIcon("thermometer");
+        testRequest.setMinValue(new java.math.BigDecimal("-10.00"));
+        testRequest.setMaxValue(new java.math.BigDecimal("50.00"));
     }
 
     @Nested
@@ -321,7 +327,7 @@ class SeriesServiceTest {
             when(seriesRepository.save(any(Series.class))).thenReturn(updatedSeries);
 
             // Act
-            SeriesResponse result = seriesService.updateSeries(1, updateRequest, "testuser");
+            SeriesResponse result = seriesService.updateSeries(1, updateRequest);
 
             // Assert
             assertThat(result).isNotNull();
@@ -352,7 +358,7 @@ class SeriesServiceTest {
             });
 
             // Act
-            seriesService.updateSeries(1, updateRequest, "testuser");
+            seriesService.updateSeries(1, updateRequest);
 
             // Assert
             verify(seriesRepository, times(1)).save(any(Series.class));
@@ -365,7 +371,7 @@ class SeriesServiceTest {
             when(seriesRepository.findById(999)).thenReturn(Optional.empty());
 
             // Act & Assert
-            assertThatThrownBy(() -> seriesService.updateSeries(999, testRequest, "testuser"))
+            assertThatThrownBy(() -> seriesService.updateSeries(999, testRequest))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessageContaining("Series not found with id: 999");
 
@@ -386,7 +392,7 @@ class SeriesServiceTest {
             when(seriesRepository.save(any(Series.class))).thenReturn(testSeries);
 
             // Act
-            SeriesResponse result = seriesService.updateSeries(1, updateRequest, "testuser");
+            SeriesResponse result = seriesService.updateSeries(1, updateRequest);
 
             // Assert
             assertThat(result).isNotNull();
@@ -410,7 +416,7 @@ class SeriesServiceTest {
             });
 
             // Act
-            seriesService.updateSeries(1, testRequest, "differentuser");
+            seriesService.updateSeries(1, testRequest);
 
             // Assert
             verify(seriesRepository, times(1)).save(any(Series.class));

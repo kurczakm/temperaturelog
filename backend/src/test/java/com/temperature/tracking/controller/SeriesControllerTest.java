@@ -63,6 +63,9 @@ class SeriesControllerTest {
         testRequest.setName("Temperature Series");
         testRequest.setDescription("Test series for temperature measurements");
         testRequest.setColor("#FF5733");
+        testRequest.setIcon("thermometer");
+        testRequest.setMinValue(new java.math.BigDecimal("-10.00"));
+        testRequest.setMaxValue(new java.math.BigDecimal("50.00"));
 
         // Setup test response
         testResponse = new SeriesResponse();
@@ -70,6 +73,9 @@ class SeriesControllerTest {
         testResponse.setName("Temperature Series");
         testResponse.setDescription("Test series for temperature measurements");
         testResponse.setColor("#FF5733");
+        testResponse.setIcon("thermometer");
+        testResponse.setMinValue(new java.math.BigDecimal("-10.00"));
+        testResponse.setMaxValue(new java.math.BigDecimal("50.00"));
         testResponse.setCreatedBy(1);
         testResponse.setCreatedByUsername("admin");
         testResponse.setCreatedAt(testDateTime);
@@ -349,7 +355,7 @@ class SeriesControllerTest {
             updatedResponse.setCreatedByUsername("admin");
             updatedResponse.setCreatedAt(testDateTime);
 
-            when(seriesService.updateSeries(eq(1), any(SeriesRequest.class), eq("admin")))
+            when(seriesService.updateSeries(eq(1), any(SeriesRequest.class)))
                     .thenReturn(updatedResponse);
 
             // Act & Assert
@@ -365,7 +371,7 @@ class SeriesControllerTest {
                     .andExpect(jsonPath("$.color", is("#2ECC71")))
                     .andExpect(jsonPath("$.createdByUsername", is("admin")));
 
-            verify(seriesService, times(1)).updateSeries(eq(1), any(SeriesRequest.class), eq("admin"));
+            verify(seriesService, times(1)).updateSeries(eq(1), any(SeriesRequest.class));
         }
 
         @Test
@@ -385,7 +391,7 @@ class SeriesControllerTest {
                             .content(objectMapper.writeValueAsString(updateRequest)))
                     .andExpect(status().isForbidden());
 
-            verify(seriesService, never()).updateSeries(any(), any(), any());
+            verify(seriesService, never()).updateSeries(any(), any());
         }
 
         @Test
@@ -398,7 +404,7 @@ class SeriesControllerTest {
                             .content(objectMapper.writeValueAsString(testRequest)))
                     .andExpect(status().isForbidden());
 
-            verify(seriesService, never()).updateSeries(any(), any(), any());
+            verify(seriesService, never()).updateSeries(any(), any());
         }
 
         @Test
@@ -406,7 +412,7 @@ class SeriesControllerTest {
         @WithMockUser(username = "admin", roles = {"ADMIN"})
         void shouldThrowExceptionWhenSeriesNotFoundForUpdate() throws Exception {
             // Arrange
-            when(seriesService.updateSeries(eq(999), any(SeriesRequest.class), eq("admin")))
+            when(seriesService.updateSeries(eq(999), any(SeriesRequest.class)))
                     .thenThrow(new RuntimeException("Series not found with id: 999"));
 
             // Act & Assert - Verify the service method is called and exception is thrown
@@ -418,7 +424,7 @@ class SeriesControllerTest {
                 // Exception is expected
             }
 
-            verify(seriesService, times(1)).updateSeries(eq(999), any(SeriesRequest.class), eq("admin"));
+            verify(seriesService, times(1)).updateSeries(eq(999), any(SeriesRequest.class));
         }
     }
 
@@ -529,7 +535,7 @@ class SeriesControllerTest {
             when(seriesService.getAllSeries()).thenReturn(Collections.singletonList(testResponse));
             when(seriesService.getSeriesById(1)).thenReturn(testResponse);
             when(seriesService.createSeries(any(), any())).thenReturn(testResponse);
-            when(seriesService.updateSeries(any(), any(), any())).thenReturn(testResponse);
+            when(seriesService.updateSeries(any(), any())).thenReturn(testResponse);
             doNothing().when(seriesService).deleteSeries(any());
 
             // Act & Assert - GET all

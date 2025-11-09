@@ -5,8 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * Data transfer object representing a Series in API responses.
+ * Contains all series metadata including creator information.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,6 +20,9 @@ public class SeriesResponse {
     private String name;
     private String description;
     private String color;
+    private String icon;
+    private BigDecimal minValue;
+    private BigDecimal maxValue;
     private Integer createdBy;
     private String createdByUsername;
     private LocalDateTime createdAt;
@@ -25,6 +33,9 @@ public class SeriesResponse {
                 series.getName(),
                 series.getDescription(),
                 series.getColor(),
+                series.getIcon(),
+                series.getMinValue(),
+                series.getMaxValue(),
                 series.getCreatedBy() != null ? series.getCreatedBy().getId() : null,
                 series.getCreatedBy() != null ? series.getCreatedBy().getUsername() : null,
                 series.getCreatedAt()

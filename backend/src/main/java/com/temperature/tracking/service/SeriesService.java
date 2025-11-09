@@ -44,6 +44,9 @@ public class SeriesService {
         series.setName(request.getName());
         series.setDescription(request.getDescription());
         series.setColor(request.getColor());
+        series.setIcon(request.getIcon());
+        series.setMinValue(request.getMinValue());
+        series.setMaxValue(request.getMaxValue());
         series.setCreatedBy(user);
 
         Series savedSeries = seriesRepository.save(series);
@@ -51,13 +54,16 @@ public class SeriesService {
     }
 
     @Transactional
-    public SeriesResponse updateSeries(Integer id, SeriesRequest request, String username) {
+    public SeriesResponse updateSeries(Integer id, SeriesRequest request) {
         Series series = seriesRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Series not found with id: " + id));
 
         series.setName(request.getName());
         series.setDescription(request.getDescription());
         series.setColor(request.getColor());
+        series.setIcon(request.getIcon());
+        series.setMinValue(request.getMinValue());
+        series.setMaxValue(request.getMaxValue());
 
         Series updatedSeries = seriesRepository.save(series);
         return SeriesResponse.fromEntity(updatedSeries);

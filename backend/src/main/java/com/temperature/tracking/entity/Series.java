@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -26,6 +27,15 @@ public class Series {
 
     @Column(length = 20)
     private String color;
+
+    @Column(length = 50)
+    private String icon;
+
+    @Column(name = "min_value", precision = 5, scale = 2)
+    private BigDecimal minValue;
+
+    @Column(name = "max_value", precision = 5, scale = 2)
+    private BigDecimal maxValue;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", referencedColumnName = "id")

@@ -49,8 +49,7 @@ public class SeriesController {
     public ResponseEntity<SeriesResponse> updateSeries(
             @PathVariable Integer id,
             @Valid @RequestBody SeriesRequest request) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        SeriesResponse series = seriesService.updateSeries(id, request, username);
+        SeriesResponse series = seriesService.updateSeries(id, request);
         return ResponseEntity.ok(series);
     }
 
