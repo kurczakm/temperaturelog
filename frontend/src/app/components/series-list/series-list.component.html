@@ -1,0 +1,87 @@
+<div class="series-list-container">
+  <div class="header">
+    <h1>Temperature Series</h1>
+    @if (isAdmin()) {
+      <button class="btn-primary" routerLink="/series/new" aria-label="Create new temperature series">
+        <span class="icon" aria-hidden="true">+</span>
+        Create Series
+      </button>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="loading">Loading series...</div>
+  }
+
+  @if (error()) {
+    <div class="error-message" role="alert" aria-live="polite">
+      <span class="icon" aria-hidden="true">⚠</span>
+      {{ error() }}
+      <button class="btn-secondary" (click)="loadSeries()" aria-label="Retry loading series">Retry</button>
+    </div>
+  }
+
+  @if (!loading() && !error()) {
+    @if (series().length === 0) {
+      <div class="empty-state" role="status" aria-live="polite">
+        <p>No series found.</p>
+        @if (isAdmin()) {
+          <button class="btn-primary" routerLink="/series/new" aria-label="Create your first temperature series">Create First Series</button>
+        }
+      </div>
+    } @else {
+      <div class="series-grid">
+        @for (s of series(); track s.id) {
+          <div class="series-card">
+            <div class="series-header">
+              <div class="series-icon" [style.background-color]="s.color">
+                {{ s.icon }}
+              </div>
+              <div class="series-info">
+                <h3>{{ s.name }}</h3>
+                @if (s.description) {
+                  <p class="description">{{ s.description }}</p>
+                }
+              </div>
+            </div>
+
+            <div class="series-details">
+              <div class="detail-row">
+                <span class="label">Range:</span>
+                <span class="value">{{ s.minValue }}°C - {{ s.maxValue }}°C</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Created by:</span>
+                <span class="value">{{ s.createdBy }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Created:</span>
+                <span class="value">{{ s.createdAt | date:'short' }}</span>
+              </div>
+              @if (s.modifiedAt !== s.createdAt) {
+                <div class="detail-row">
+                  <span class="label">Modified:</span>
+                  <span class="value">{{ s.modifiedAt | date:'short' }}</span>
+                </div>
+              }
+            </div>
+
+            <div class="series-actions">
+              <button class="btn-secondary" (click)="viewMeasurements(s.id)" [attr.aria-label]="'View measurements for ' + s.name">
+                View Measurements
+              </button>
+              @if (isAdmin()) {
+                <button class="btn-secondary" [routerLink]="['/series/edit', s.id]" [attr.aria-label]="'Edit ' + s.name">
+                  Edit
+                </button>
+                <button class="btn-danger" (click)="deleteSeries(s.id, s.name)" [attr.aria-label]="'Delete ' + s.name">
+                  Delete
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

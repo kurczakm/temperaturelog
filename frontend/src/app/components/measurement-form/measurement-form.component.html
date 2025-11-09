@@ -1,0 +1,100 @@
+<div class="form-container">
+  <div class="form-header">
+    <h1>{{ isEditMode() ? 'Edit Measurement' : 'Add New Measurement' }}</h1>
+  </div>
+
+  @if (loading() && isEditMode()) {
+    <div class="loading">Loading measurement data...</div>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="measurement-form">
+      @if (error()) {
+        <div class="error-message">
+          <span class="icon">⚠</span>
+          {{ error() }}
+        </div>
+      }
+
+      <div class="form-group">
+        <label for="seriesId">Temperature Series *</label>
+        <select
+          id="seriesId"
+          formControlName="seriesId"
+          [class.invalid]="form.get('seriesId')?.invalid && form.get('seriesId')?.touched"
+          [disabled]="isEditMode()"
+        >
+          <option value="">Select a series...</option>
+          @for (s of allSeries(); track s.id) {
+            <option [value]="s.id">
+              {{ s.icon }} {{ s.name }} ({{ s.minValue }}°C - {{ s.maxValue }}°C)
+            </option>
+          }
+        </select>
+        @if (getFieldError('seriesId')) {
+          <span class="field-error">{{ getFieldError('seriesId') }}</span>
+        }
+      </div>
+
+      @if (selectedSeries()) {
+        <div class="series-info">
+          <div class="series-header">
+            <div class="series-icon" [style.background-color]="selectedSeries()!.color">
+              {{ selectedSeries()!.icon }}
+            </div>
+            <div class="series-details">
+              <h3>{{ selectedSeries()!.name }}</h3>
+              <p>Valid range: {{ selectedSeries()!.minValue }}°C - {{ selectedSeries()!.maxValue }}°C</p>
+            </div>
+          </div>
+        </div>
+      }
+
+      <div class="form-group">
+        <label for="value">Temperature Value (°C) *</label>
+        <input
+          type="number"
+          id="value"
+          formControlName="value"
+          step="0.1"
+          placeholder="e.g., 22.5"
+          [class.invalid]="form.get('value')?.invalid && form.get('value')?.touched"
+        />
+        @if (getFieldError('value')) {
+          <span class="field-error">{{ getFieldError('value') }}</span>
+        }
+        @if (getValueStatus()) {
+          <div class="value-status" [class.warning]="isValueOutOfRange()">
+            @if (isValueOutOfRange()) {
+              <span class="icon">⚠️</span>
+            } @else {
+              <span class="icon">✓</span>
+            }
+            {{ getValueStatus() }}
+          </div>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="timestamp">Timestamp *</label>
+        <input
+          type="datetime-local"
+          id="timestamp"
+          formControlName="timestamp"
+          [class.invalid]="form.get('timestamp')?.invalid && form.get('timestamp')?.touched"
+        />
+        @if (getFieldError('timestamp')) {
+          <span class="field-error">{{ getFieldError('timestamp') }}</span>
+        }
+        <span class="field-hint">The date and time when this measurement was taken</span>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="cancel()" [disabled]="loading()">
+          Cancel
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="form.invalid || loading()">
+          {{ loading() ? 'Saving...' : (isEditMode() ? 'Update Measurement' : 'Add Measurement') }}
+        </button>
+      </div>
+    </form>
+  }
+</div>

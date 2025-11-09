@@ -1,0 +1,146 @@
+<div class="form-container">
+  <div class="form-header">
+    <h1>{{ isEditMode() ? 'Edit Series' : 'Create New Series' }}</h1>
+  </div>
+
+  @if (loading() && isEditMode()) {
+    <div class="loading">Loading series data...</div>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="series-form" aria-label="{{ isEditMode() ? 'Edit temperature series' : 'Create new temperature series' }}">
+      @if (error()) {
+        <div class="error-message" role="alert" aria-live="assertive">
+          <span class="icon" aria-hidden="true">⚠</span>
+          {{ error() }}
+        </div>
+      }
+
+      <div class="form-group">
+        <label for="name">Series Name *</label>
+        <input
+          type="text"
+          id="name"
+          formControlName="name"
+          placeholder="e.g., Living Room Temperature"
+          [class.invalid]="form.get('name')?.invalid && form.get('name')?.touched"
+          [attr.aria-describedby]="getFieldError('name') ? 'name-error' : null"
+          [attr.aria-invalid]="form.get('name')?.invalid && form.get('name')?.touched"
+          required
+        />
+        @if (getFieldError('name')) {
+          <span class="field-error" id="name-error" role="alert">{{ getFieldError('name') }}</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea
+          id="description"
+          formControlName="description"
+          rows="3"
+          placeholder="Optional description of this temperature series"
+          [class.invalid]="form.get('description')?.invalid && form.get('description')?.touched"
+          [attr.aria-describedby]="getFieldError('description') ? 'description-error' : null"
+          [attr.aria-invalid]="form.get('description')?.invalid && form.get('description')?.touched"
+        ></textarea>
+        @if (getFieldError('description')) {
+          <span class="field-error" id="description-error" role="alert">{{ getFieldError('description') }}</span>
+        }
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="minValue">Minimum Value (°C) *</label>
+          <input
+            type="number"
+            id="minValue"
+            formControlName="minValue"
+            step="0.1"
+            [class.invalid]="(form.get('minValue')?.invalid && form.get('minValue')?.touched) || hasRangeError()"
+          />
+          @if (getFieldError('minValue')) {
+            <span class="field-error">{{ getFieldError('minValue') }}</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="maxValue">Maximum Value (°C) *</label>
+          <input
+            type="number"
+            id="maxValue"
+            formControlName="maxValue"
+            step="0.1"
+            [class.invalid]="(form.get('maxValue')?.invalid && form.get('maxValue')?.touched) || hasRangeError()"
+          />
+          @if (getFieldError('maxValue')) {
+            <span class="field-error">{{ getFieldError('maxValue') }}</span>
+          }
+        </div>
+      </div>
+
+      @if (hasRangeError()) {
+        <div class="field-error">Minimum value must be less than maximum value</div>
+      }
+
+      <div class="form-group">
+        <label id="color-label">Color *</label>
+        <div class="color-picker" role="radiogroup" aria-labelledby="color-label" aria-required="true">
+          @for (color of availableColors; track color.value) {
+            <label class="color-option">
+              <input
+                type="radio"
+                formControlName="color"
+                [value]="color.value"
+                [attr.aria-label]="color.name + ' color'"
+                [attr.aria-checked]="form.get('color')?.value === color.value"
+              />
+              <span
+                class="color-swatch"
+                [style.background-color]="color.value"
+                [class.selected]="form.get('color')?.value === color.value"
+                aria-hidden="true"
+              >
+                @if (form.get('color')?.value === color.value) {
+                  <span class="checkmark">✓</span>
+                }
+              </span>
+              <span class="color-name">{{ color.name }}</span>
+            </label>
+          }
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label id="icon-label">Icon *</label>
+        <div class="icon-picker" role="radiogroup" aria-labelledby="icon-label" aria-required="true">
+          @for (icon of availableIcons; track icon) {
+            <label class="icon-option">
+              <input
+                type="radio"
+                formControlName="icon"
+                [value]="icon"
+                [attr.aria-label]="icon + ' icon'"
+                [attr.aria-checked]="form.get('icon')?.value === icon"
+              />
+              <span
+                class="icon-display"
+                [class.selected]="form.get('icon')?.value === icon"
+                aria-hidden="true"
+              >
+                {{ icon }}
+              </span>
+            </label>
+          }
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="cancel()" [disabled]="loading()">
+          Cancel
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="form.invalid || loading()">
+          {{ loading() ? 'Saving...' : (isEditMode() ? 'Update Series' : 'Create Series') }}
+        </button>
+      </div>
+    </form>
+  }
+</div>

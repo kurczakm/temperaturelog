@@ -1,0 +1,127 @@
+<div class="measurement-list-container">
+  <div class="header">
+    <div class="title-section">
+      @if (series()) {
+        <div class="series-badge" [style.background-color]="series()!.color">
+          {{ series()!.icon }}
+        </div>
+      }
+      <div>
+        <h1>{{ series() ? series()!.name + ' Measurements' : 'All Measurements' }}</h1>
+        @if (series()?.description) {
+          <p class="subtitle">{{ series()!.description }}</p>
+        }
+      </div>
+    </div>
+    <div class="header-actions">
+      @if (series()) {
+        <button class="btn-secondary" routerLink="/series">
+          ← Back to Series
+        </button>
+      }
+      @if (isAdmin()) {
+        <button class="btn-primary" [routerLink]="['/measurements/new']" [queryParams]="seriesId ? { seriesId: seriesId } : {}">
+          <span class="icon">+</span>
+          Add Measurement
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (series()) {
+    <div class="series-info-card">
+      <div class="info-item">
+        <span class="label">Valid Range:</span>
+        <span class="value">{{ series()!.minValue }}°C - {{ series()!.maxValue }}°C</span>
+      </div>
+      <div class="info-item">
+        <span class="label">Total Measurements:</span>
+        <span class="value">{{ measurements().length }}</span>
+      </div>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="loading">Loading measurements...</div>
+  }
+
+  @if (error()) {
+    <div class="error-message">
+      <span class="icon">⚠</span>
+      {{ error() }}
+      <button class="btn-secondary" (click)="seriesId ? loadMeasurements(seriesId) : loadAllMeasurements()">
+        Retry
+      </button>
+    </div>
+  }
+
+  @if (!loading() && !error()) {
+    @if (measurements().length === 0) {
+      <div class="empty-state">
+        <p>No measurements found.</p>
+        @if (isAdmin()) {
+          <button class="btn-primary" [routerLink]="['/measurements/new']" [queryParams]="seriesId ? { seriesId: seriesId } : {}">
+            Add First Measurement
+          </button>
+        }
+      </div>
+    } @else {
+      <div class="measurements-table-container">
+        <table class="measurements-table" role="table" aria-label="{{ series() ? series()!.name + ' measurements' : 'All measurements' }}">
+          <thead>
+            <tr>
+              <th scope="col">Timestamp</th>
+              @if (!series()) {
+                <th scope="col">Series</th>
+              }
+              <th scope="col">Value</th>
+              <th scope="col">Status</th>
+              <th scope="col">Created By</th>
+              @if (isAdmin()) {
+                <th scope="col">Actions</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of measurements(); track m.id) {
+              <tr>
+                <td class="timestamp">
+                  <div class="timestamp-full">{{ m.timestamp | date:'medium' }}</div>
+                  <div class="timestamp-short">{{ m.timestamp | date:'short' }}</div>
+                </td>
+                @if (!series()) {
+                  <td>Series #{{ m.seriesId }}</td>
+                }
+                <td class="value">
+                  <span class="temperature">{{ m.value }}°C</span>
+                </td>
+                <td>
+                  <span class="status-badge" [class]="getValueStatus(m.value)">
+                    @if (getValueStatus(m.value) === 'low') {
+                      ❄️ Below Range
+                    } @else if (getValueStatus(m.value) === 'high') {
+                      🔥 Above Range
+                    } @else {
+                      ✓ Normal
+                    }
+                  </span>
+                </td>
+                <td>{{ m.createdBy }}</td>
+                @if (isAdmin()) {
+                  <td class="actions">
+                    <button class="btn-sm btn-secondary" [routerLink]="['/measurements/edit', m.id]" [attr.aria-label]="'Edit measurement from ' + (m.timestamp | date:'short')">
+                      Edit
+                    </button>
+                    <button class="btn-sm btn-danger" (click)="deleteMeasurement(m.id)" [attr.aria-label]="'Delete measurement from ' + (m.timestamp | date:'short')">
+                      Delete
+                    </button>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</div>

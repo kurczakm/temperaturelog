@@ -42,8 +42,7 @@ export class Signin {
         this.isLoading.set(false);
         this.signInForm.enable();
         console.log('Sign in successful', response);
-        // Navigate to dashboard or home page
-        // this.router.navigate(['/dashboard']);
+        this.router.navigate(['/series']);
       },
       error: (error) => {
         this.isLoading.set(false);

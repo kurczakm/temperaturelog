@@ -1,0 +1,27 @@
+@if (auth.isAuthenticated()) {
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-brand">
+        <span class="logo">🌡️</span>
+        <h1>Temperature Tracker</h1>
+      </div>
+
+      <div class="nav-links">
+        <a routerLink="/series" routerLinkActive="active">Series</a>
+        <a routerLink="/measurements" routerLinkActive="active">Measurements</a>
+      </div>
+
+      <div class="nav-user">
+        <div class="user-info">
+          <span class="username">{{ auth.currentUser()?.username }}</span>
+          <span class="role-badge" [class.admin]="isAdmin()">
+            {{ auth.currentUser()?.role }}
+          </span>
+        </div>
+        <button class="btn-signout" (click)="signOut()">
+          Sign Out
+        </button>
+      </div>
+    </div>
+  </nav>
+}
