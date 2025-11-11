@@ -154,13 +154,17 @@ class SeriesControllerTest {
         }
 
         @Test
-        @DisplayName("Should return 403 for unauthenticated user")
-        void shouldReturn403ForUnauthenticatedUser() throws Exception {
-            // Act & Assert - Spring Security returns 403 when CSRF is disabled
-            mockMvc.perform(get("/api/series"))
-                    .andExpect(status().isForbidden());
+        @DisplayName("Should return 200 for unauthenticated user (public read access)")
+        void shouldReturn200ForUnauthenticatedUser() throws Exception {
+            // Arrange
+            when(seriesService.getAllSeries()).thenReturn(List.of(testResponse));
 
-            verify(seriesService, never()).getAllSeries();
+            // Act & Assert - Unauthenticated users can now view series (read-only)
+            mockMvc.perform(get("/api/series"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+            verify(seriesService, times(1)).getAllSeries();
         }
     }
 
@@ -225,13 +229,17 @@ class SeriesControllerTest {
         }
 
         @Test
-        @DisplayName("Should return 403 for unauthenticated user")
-        void shouldReturn403ForUnauthenticatedUserGetById() throws Exception {
-            // Act & Assert - Spring Security returns 403 when CSRF is disabled
-            mockMvc.perform(get("/api/series/1"))
-                    .andExpect(status().isForbidden());
+        @DisplayName("Should return 200 for unauthenticated user (public read access)")
+        void shouldReturn200ForUnauthenticatedUserGetById() throws Exception {
+            // Arrange
+            when(seriesService.getSeriesById(1)).thenReturn(testResponse);
 
-            verify(seriesService, never()).getSeriesById(any());
+            // Act & Assert - Unauthenticated users can now view series (read-only)
+            mockMvc.perform(get("/api/series/1"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+
+            verify(seriesService, times(1)).getSeriesById(1);
         }
     }
 

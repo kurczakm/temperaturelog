@@ -133,3 +133,10 @@
     display: none;
   }
 }
+
+// Hide navigation when printing
+@media print {
+  .navbar {
+    display: none !important;
+  }
+}

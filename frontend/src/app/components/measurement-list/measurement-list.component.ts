@@ -128,13 +128,4 @@ export class MeasurementListComponent implements OnInit {
   isAdmin(): boolean {
     return this.auth.currentUser()?.role === 'ADMIN';
   }
-
-  getValueStatus(value: number): string {
-    const s = this.series();
-    if (!s) return 'normal';
-
-    if (value < s.minValue) return 'low';
-    if (value > s.maxValue) return 'high';
-    return 'normal';
-  }
 }

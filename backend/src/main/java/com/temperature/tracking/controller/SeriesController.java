@@ -23,14 +23,12 @@ public class SeriesController {
     private final SeriesService seriesService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<List<SeriesResponse>> getAllSeries() {
         List<SeriesResponse> series = seriesService.getAllSeries();
         return ResponseEntity.ok(series);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<SeriesResponse> getSeriesById(@PathVariable Integer id) {
         SeriesResponse series = seriesService.getSeriesById(id);
         return ResponseEntity.ok(series);

@@ -347,7 +347,7 @@ class MeasurementControllerTest {
                             .content("{invalid json}"))
                     .andExpect(status().isBadRequest());
 
-            verify(measurementService, never()).updateMeasurement(anyInt(), any(MeasurementRequest.class), anyString());
+            verify(measurementService, never()).updateMeasurement(anyInt(), any(MeasurementRequest.class));
         }
     }
 

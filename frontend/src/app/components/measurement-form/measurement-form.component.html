@@ -34,15 +34,15 @@
         }
       </div>
 
-      @if (selectedSeries()) {
+      @if (selectedSeries(); as series) {
         <div class="series-info">
           <div class="series-header">
-            <div class="series-icon" [style.background-color]="selectedSeries()!.color">
-              {{ selectedSeries()!.icon }}
+            <div class="series-icon" [style.background-color]="series.color">
+              {{ series.icon }}
             </div>
             <div class="series-details">
-              <h3>{{ selectedSeries()!.name }}</h3>
-              <p>Valid range: {{ selectedSeries()!.minValue }}°C - {{ selectedSeries()!.maxValue }}°C</p>
+              <h3>{{ series.name }}</h3>
+              <p>Valid range: {{ series.minValue }}°C - {{ series.maxValue }}°C</p>
             </div>
           </div>
         </div>
@@ -57,17 +57,14 @@
           step="0.1"
           placeholder="e.g., 22.5"
           [class.invalid]="form.get('value')?.invalid && form.get('value')?.touched"
+          [attr.aria-invalid]="form.get('value')?.invalid && form.get('value')?.touched"
+          [attr.aria-describedby]="getFieldError('value') ? 'value-error' : (getValueStatus() ? 'value-status' : null)"
         />
         @if (getFieldError('value')) {
-          <span class="field-error">{{ getFieldError('value') }}</span>
-        }
-        @if (getValueStatus()) {
-          <div class="value-status" [class.warning]="isValueOutOfRange()">
-            @if (isValueOutOfRange()) {
-              <span class="icon">⚠️</span>
-            } @else {
-              <span class="icon">✓</span>
-            }
+          <span id="value-error" class="field-error" role="alert">{{ getFieldError('value') }}</span>
+        } @else if (getValueStatus() && !isValueOutOfRange()) {
+          <div id="value-status" class="value-status" role="status">
+            <span class="icon">✓</span>
             {{ getValueStatus() }}
           </div>
         }

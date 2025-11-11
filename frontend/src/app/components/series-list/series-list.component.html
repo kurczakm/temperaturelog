@@ -1,12 +1,18 @@
 <div class="series-list-container">
   <div class="header">
     <h1>Temperature Series</h1>
-    @if (isAdmin()) {
-      <button class="btn-primary" routerLink="/series/new" aria-label="Create new temperature series">
-        <span class="icon" aria-hidden="true">+</span>
-        Create Series
+    <div class="header-actions">
+      <button class="btn-secondary" routerLink="/chart" aria-label="View series chart">
+        <span class="icon" aria-hidden="true">📊</span>
+        View Chart
       </button>
-    }
+      @if (isAdmin()) {
+        <button class="btn-primary" routerLink="/series/new" aria-label="Create new temperature series">
+          <span class="icon" aria-hidden="true">+</span>
+          Create Series
+        </button>
+      }
+    </div>
   </div>
 
   @if (loading()) {

@@ -1,0 +1,230 @@
+<div class="series-chart-container">
+  <div class="page-header">
+    <h1 class="page-title">Series Chart</h1>
+    @if (!loading() && !error()) {
+      <button
+        type="button"
+        class="print-btn"
+        (click)="printChart()"
+        [disabled]="!hasSelectedSeries()"
+        [attr.aria-label]="hasSelectedSeries() ? 'Print chart and table' : 'Select at least one series to print'"
+        title="Print chart and table"
+      >
+        <span class="print-icon" aria-hidden="true">🖨️</span>
+        <span class="print-text">Print</span>
+      </button>
+    }
+  </div>
+
+  <!-- Print Info (only visible when printing) -->
+  <div class="print-info">
+    <div class="print-meta">
+      <p><strong>Generated:</strong> {{ currentDate | date:'full' }}</p>
+      <p><strong>Time Period:</strong> {{ getPeriodLabel() }}</p>
+      <p><strong>Selected Series:</strong> {{ getSelectedSeriesNames() }}</p>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="loading">Loading series data...</div>
+  }
+
+  <!-- Error State -->
+  @if (error()) {
+    <div class="error-message">{{ error() }}</div>
+  }
+
+  <!-- Main Content -->
+  @if (!loading() && !error()) {
+    <div class="chart-controls">
+      <!-- Time Period Selector -->
+      <div class="control-section">
+        <h3>Time Period</h3>
+        <div class="period-buttons">
+          <button
+            type="button"
+            [class.active]="selectedPeriod === '24h'"
+            (click)="selectedPeriod = '24h'; onPeriodChange()"
+          >
+            Last 24 Hours
+          </button>
+          <button
+            type="button"
+            [class.active]="selectedPeriod === '7d'"
+            (click)="selectedPeriod = '7d'; onPeriodChange()"
+          >
+            Last 7 Days
+          </button>
+          <button
+            type="button"
+            [class.active]="selectedPeriod === '30d'"
+            (click)="selectedPeriod = '30d'; onPeriodChange()"
+          >
+            Last 30 Days
+          </button>
+          <button
+            type="button"
+            [class.active]="selectedPeriod === 'all'"
+            (click)="selectedPeriod = 'all'; onPeriodChange()"
+          >
+            All Time
+          </button>
+          <button
+            type="button"
+            [class.active]="selectedPeriod === 'custom'"
+            (click)="selectedPeriod = 'custom'; onPeriodChange()"
+          >
+            Custom Range
+          </button>
+        </div>
+
+        <!-- Custom Date Range -->
+        @if (selectedPeriod === 'custom') {
+          <div class="custom-date-range">
+            <div class="date-input">
+              <label for="startDate">Start Date:</label>
+              <input
+                type="datetime-local"
+                id="startDate"
+                [(ngModel)]="customStartDate"
+                (change)="onCustomDateChange()"
+              />
+            </div>
+            <div class="date-input">
+              <label for="endDate">End Date:</label>
+              <input
+                type="datetime-local"
+                id="endDate"
+                [(ngModel)]="customEndDate"
+                (change)="onCustomDateChange()"
+              />
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Series Selection -->
+      <div class="control-section">
+        <div class="series-header">
+          <h3>Select Series ({{ selectedCount() }} selected)</h3>
+          <div class="selection-buttons">
+            <button type="button" (click)="selectAllSeries()" class="small-btn">
+              Select All
+            </button>
+            <button type="button" (click)="deselectAllSeries()" class="small-btn">
+              Deselect All
+            </button>
+          </div>
+        </div>
+
+        @if (seriesSelections().length === 0) {
+          <p class="no-series">No series available. Create a series first.</p>
+        } @else {
+          <div class="series-checkboxes">
+            @for (selection of seriesSelections(); track selection.series.id) {
+              <label class="series-checkbox-item">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="selection.selected"
+                  (change)="onSeriesSelectionChange()"
+                />
+                <span class="series-badge print-color-preserve" [style.background-color]="selection.series.color">
+                  {{ selection.series.icon }} {{ selection.series.name }}
+                </span>
+                <span class="measurement-count">
+                  ({{ selection.measurements.length }} measurements)
+                </span>
+              </label>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-section">
+      @if (!hasSelectedSeries()) {
+        <div class="empty-state">
+          <p>Please select at least one series to display the chart.</p>
+        </div>
+      } @else {
+        <div class="chart-wrapper">
+          <canvas
+            baseChart
+            [type]="lineChartType"
+            [data]="lineChartData"
+            [options]="lineChartOptions"
+          ></canvas>
+        </div>
+      }
+    </div>
+
+    <!-- Measurements Table -->
+    @if (hasSelectedSeries()) {
+      <div class="table-section">
+        <div class="table-header">
+          <h3>Measurements Data ({{ tableMeasurements().length }} records)</h3>
+          @if (highlightedMeasurement()) {
+            <button
+              type="button"
+              class="clear-highlight-btn"
+              (click)="clearHighlight()"
+              aria-label="Clear highlight"
+            >
+              Clear Highlight
+            </button>
+          }
+        </div>
+
+        @if (tableMeasurements().length === 0) {
+          <div class="no-data">
+            <p>No measurements found for the selected time period.</p>
+          </div>
+        } @else {
+          <div class="table-wrapper">
+            <table class="measurements-table">
+              <thead>
+                <tr>
+                  <th>Series</th>
+                  <th>Value</th>
+                  <th>Timestamp</th>
+                  <th>Created By</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (measurement of tableMeasurements(); track measurement.id) {
+                  <tr
+                    class="measurement-row"
+                    [class.highlighted]="isHighlighted(measurement)"
+                    (click)="highlightMeasurement(measurement)"
+                    role="button"
+                    tabindex="0"
+                    (keydown.enter)="highlightMeasurement(measurement)"
+                    (keydown.space)="highlightMeasurement(measurement); $event.preventDefault()"
+                    [attr.aria-label]="'Highlight ' + measurement.seriesName + ' measurement: ' + measurement.value"
+                  >
+                    <td>
+                      <span class="series-badge-small print-color-preserve" [style.background-color]="measurement.seriesColor">
+                        {{ measurement.seriesIcon }} {{ measurement.seriesName }}
+                      </span>
+                    </td>
+                    <td class="value-cell">
+                      <span class="value">{{ measurement.value }}°C</span>
+                    </td>
+                    <td class="timestamp-cell">
+                      {{ measurement.timestamp | date:'medium' }}
+                    </td>
+                    <td class="creator-cell">
+                      {{ measurement.createdBy }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

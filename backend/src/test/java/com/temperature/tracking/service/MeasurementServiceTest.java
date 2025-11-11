@@ -6,6 +6,7 @@ import com.temperature.tracking.entity.Measurement;
 import com.temperature.tracking.entity.Series;
 import com.temperature.tracking.entity.User;
 import com.temperature.tracking.exception.ResourceNotFoundException;
+import com.temperature.tracking.exception.ValidationException;
 import com.temperature.tracking.repository.MeasurementRepository;
 import com.temperature.tracking.repository.SeriesRepository;
 import com.temperature.tracking.repository.UserRepository;
@@ -506,7 +507,7 @@ class MeasurementServiceTest {
             when(measurementRepository.save(any(Measurement.class))).thenReturn(updatedMeasurement);
 
             // Act
-            MeasurementResponse result = measurementService.updateMeasurement(1, request, "admin");
+            MeasurementResponse result = measurementService.updateMeasurement(1, request);
 
             // Assert
             assertThat(result).isNotNull();
@@ -531,7 +532,7 @@ class MeasurementServiceTest {
             when(measurementRepository.findById(999)).thenReturn(Optional.empty());
 
             // Act & Assert
-            assertThatThrownBy(() -> measurementService.updateMeasurement(999, request, "admin"))
+            assertThatThrownBy(() -> measurementService.updateMeasurement(999, request))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessage("Measurement not found with id: 999");
 
@@ -564,7 +565,7 @@ class MeasurementServiceTest {
             });
 
             // Act
-            measurementService.updateMeasurement(1, request, "admin");
+            measurementService.updateMeasurement(1, request);
 
             // Assert
             verify(seriesRepository, times(1)).findById(2);
@@ -585,7 +586,7 @@ class MeasurementServiceTest {
             when(seriesRepository.findById(999)).thenReturn(Optional.empty());
 
             // Act & Assert
-            assertThatThrownBy(() -> measurementService.updateMeasurement(1, request, "admin"))
+            assertThatThrownBy(() -> measurementService.updateMeasurement(1, request))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessage("Series not found with id: 999");
 
@@ -613,7 +614,7 @@ class MeasurementServiceTest {
             });
 
             // Act
-            measurementService.updateMeasurement(1, request, "admin");
+            measurementService.updateMeasurement(1, request);
 
             // Assert
             verify(seriesRepository, never()).findById(anyInt());
@@ -643,7 +644,7 @@ class MeasurementServiceTest {
             when(measurementRepository.save(any(Measurement.class))).thenReturn(updatedMeasurement);
 
             // Act
-            MeasurementResponse result = measurementService.updateMeasurement(1, request, "admin");
+            MeasurementResponse result = measurementService.updateMeasurement(1, request);
 
             // Assert
             assertThat(result.getValue()).isEqualByComparingTo(new BigDecimal("26.50"));
@@ -836,6 +837,761 @@ class MeasurementServiceTest {
 
             // Assert
             assertThat(result.getTimestamp()).isEqualTo(pastTimestamp);
+        }
+    }
+
+    @Nested
+    @DisplayName("Value Validation Against Series Bounds")
+    class ValueValidation {
+
+        private Series seriesWithBounds;
+        private Series seriesNoBounds;
+
+        @BeforeEach
+        void setUpValidation() {
+            // Series with min=0.00 and max=100.00
+            seriesWithBounds = new Series();
+            seriesWithBounds.setId(2);
+            seriesWithBounds.setName("Bounded Temperature");
+            seriesWithBounds.setDescription("Temperature with min/max bounds");
+            seriesWithBounds.setMinValue(new BigDecimal("0.00"));
+            seriesWithBounds.setMaxValue(new BigDecimal("100.00"));
+            seriesWithBounds.setCreatedBy(testUser);
+            seriesWithBounds.setCreatedAt(testTimestamp);
+
+            // Series with no bounds (null min/max)
+            seriesNoBounds = new Series();
+            seriesNoBounds.setId(3);
+            seriesNoBounds.setName("Unbounded Temperature");
+            seriesNoBounds.setDescription("Temperature without min/max bounds");
+            seriesNoBounds.setMinValue(null);
+            seriesNoBounds.setMaxValue(null);
+            seriesNoBounds.setCreatedBy(testUser);
+            seriesNoBounds.setCreatedAt(testTimestamp);
+        }
+
+        @Nested
+        @DisplayName("Create Measurement Validation")
+        class CreateMeasurementValidation {
+
+            @Test
+            @DisplayName("Should successfully create measurement with value within bounds")
+            void shouldSuccessfullyCreateMeasurementWithValueWithinBounds() {
+                // Arrange
+                MeasurementRequest request = new MeasurementRequest(
+                        2,
+                        new BigDecimal("50.00"),
+                        testTimestamp
+                );
+
+                Measurement savedMeasurement = new Measurement();
+                savedMeasurement.setId(1);
+                savedMeasurement.setSeries(seriesWithBounds);
+                savedMeasurement.setValue(new BigDecimal("50.00"));
+                savedMeasurement.setTimestamp(testTimestamp);
+                savedMeasurement.setCreatedBy(testUser);
+
+                when(userRepository.findByUsername("admin")).thenReturn(Optional.of(testUser));
+                when(seriesRepository.findById(2)).thenReturn(Optional.of(seriesWithBounds));
+                when(measurementRepository.save(any(Measurement.class))).thenReturn(savedMeasurement);
+
+                // Act
+                MeasurementResponse result = measurementService.createMeasurement(request, "admin");
+
+                // Assert
+                assertThat(result).isNotNull();
+                assertThat(result.getValue()).isEqualByComparingTo(new BigDecimal("50.00"));
+                verify(measurementRepository, times(1)).save(any(Measurement.class));
+            }
+
+            @Test
+            @DisplayName("Should successfully create measurement with value exactly at minimum")
+            void shouldSuccessfullyCreateMeasurementWithValueExactlyAtMinimum() {
+                // Arrange
+                MeasurementRequest request = new MeasurementRequest(
+                        2,
+                        new BigDecimal("0.00"),
+                        testTimestamp
+                );
+
+                Measurement savedMeasurement = new Measurement();
+                savedMeasurement.setId(1);
+                savedMeasurement.setSeries(seriesWithBounds);
+                savedMeasurement.setValue(new BigDecimal("0.00"));
+                savedMeasurement.setTimestamp(testTimestamp);
+                savedMeasurement.setCreatedBy(testUser);
+
+                when(userRepository.findByUsername("admin")).thenReturn(Optional.of(testUser));
+                when(seriesRepository.findById(2)).thenReturn(Optional.of(seriesWithBounds));
+                when(measurementRepository.save(any(Measurement.class))).thenReturn(savedMeasurement);
+
+                // Act
+                MeasurementResponse result = measurementService.createMeasurement(request, "admin");
+
+                // Assert
+                assertThat(result).isNotNull();
+                assertThat(result.getValue()).isEqualByComparingTo(new BigDecimal("0.00"));
+                verify(measurementRepository, times(1)).save(any(Measurement.class));
+            }
+
+            @Test
+            @DisplayName("Should successfully create measurement with value exactly at maximum")
+            void shouldSuccessfullyCreateMeasurementWithValueExactlyAtMaximum() {
+                // Arrange
+                MeasurementRequest request = new MeasurementRequest(
+                        2,
+                        new BigDecimal("100.00"),
+                        testTimestamp
+                );
+
+                Measurement savedMeasurement = new Measurement();
+                savedMeasurement.setId(1);
+                savedMeasurement.setSeries(seriesWithBounds);
+                savedMeasurement.setValue(new BigDecimal("100.00"));
+                savedMeasurement.setTimestamp(testTimestamp);
+                savedMeasurement.setCreatedBy(testUser);
+
+                when(userRepository.findByUsername("admin")).thenReturn(Optional.of(testUser));
+                when(seriesRepository.findById(2)).thenReturn(Optional.of(seriesWithBounds));
+                when(measurementRepository.save(any(Measurement.class))).thenReturn(savedMeasurement);
+
+                // Act
+                MeasurementResponse result = measurementService.createMeasurement(request, "admin");
+
+                // Assert
+                assertThat(result).isNotNull();
+                assertThat(result.getValue()).isEqualByComparingTo(new BigDecimal("100.00"));
+                verify(measurementRepository, times(1)).save(any(Measurement.class));
+            }
+
+            @Test
+            @DisplayName("Should throw ValidationException when value is below minimum")
+            void shouldThrowValidationExceptionWhenValueIsBelowMinimum() {
+                // Arrange
+                MeasurementRequest request = new MeasurementRequest(
+                        2,
+                        new BigDecimal("-1.00"),
+                        testTimestamp
+                );
+
+                when(userRepository.findByUsername("admin")).thenReturn(Optional.of(testUser));
+                when(seriesRepository.findById(2)).thenReturn(Optional.of(seriesWithBounds));
+
+                // Act & Assert
+                assertThatThrownBy(() -> measurementService.createMeasurement(request, "admin"))
+                        .isInstanceOf(ValidationException.class)
+                        .hasMessageContaining("below the minimum allowed value")
+                        .hasMessageContaining("-1.00")
+                        .hasMessageContaining("0.00")
+                        .hasMessageContaining("Bounded Temperature");
+
+                verify(measurementRepository, never()).save(any(Measurement.class));
+            }
+
+            @Test
+            @DisplayName("Should throw ValidationException when value is above maximum")
+            void shouldThrowValidationExceptionWhenValueIsAboveMaximum() {
+                // Arrange
+                MeasurementRequest request = new MeasurementRequest(
+                        2,
+                        new BigDecimal("150.00"),
+                        testTimestamp
+                );
+
+                when(userRepository.findByUsername("admin")).thenReturn(Optional.of(testUser));
+                when(seriesRepository.findById(2)).thenReturn(Optional.of(seriesWithBounds));
+
+                // Act & Assert
+                assertThatThrownBy(() -> measurementService.createMeasurement(request, "admin"))
+                        .isInstanceOf(ValidationException.class)
+                        .hasMessageContaining("exceeds the maximum allowed value")
+                        .hasMessageContaining("150.00")
+                        .hasMessageContaining("100.00")
+                        .hasMessageContaining("Bounded Temperature");
+
+                verify(measurementRepository, never()).save(any(Measurement.class));
+            }
+
+            @Test
+            @DisplayName("Should throw ValidationException when value is slightly below minimum")
+            void shouldThrowValidationExceptionWhenValueIsSlightlyBelowMinimum() {
+                // Arrange
+                MeasurementRequest request = new MeasurementRequest(
+                        2,
+                        new BigDecimal("-0.01"),
+                        testTimestamp
+                );
+
+                when(userRepository.findByUsername("admin")).thenReturn(Optional.of(testUser));
+                when(seriesRepository.findById(2)).thenReturn(Optional.of(seriesWithBounds));
+
+                // Act & Assert
+                assertThatThrownBy(() -> measurementService.createMeasurement(request, "admin"))
+                        .isInstanceOf(ValidationException.class)
+                        .hasMessageContaining("below the minimum allowed value");
+
+                verify(measurementRepository, never()).save(any(Measurement.class));
+            }
+
+            @Test
+            @DisplayName("Should throw ValidationException when value is slightly above maximum")
+            void shouldThrowValidationExceptionWhenValueIsSlightlyAboveMaximum() {
+                // Arrange
+                MeasurementRequest request = new MeasurementRequest(
+                        2,
+                        new BigDecimal("100.01"),
+                        testTimestamp
+                );
+
+                when(userRepository.findByUsername("admin")).thenReturn(Optional.of(testUser));
+                when(seriesRepository.findById(2)).thenReturn(Optional.of(seriesWithBounds));
+
+                // Act & Assert
+                assertThatThrownBy(() -> measurementService.createMeasurement(request, "admin"))
+                        .isInstanceOf(ValidationException.class)
+                        .hasMessageContaining("exceeds the maximum allowed value");
+
+                verify(measurementRepository, never()).save(any(Measurement.class));
+            }
+
+            @Test
+            @DisplayName("Should allow any value when series has no bounds")
+            void shouldAllowAnyValueWhenSeriesHasNoBounds() {
+                // Arrange
+                MeasurementRequest request = new MeasurementRequest(
+                        3,
+                        new BigDecimal("999999.99"),
+                        testTimestamp
+                );
+
+                Measurement savedMeasurement = new Measurement();
+                savedMeasurement.setId(1);
+                savedMeasurement.setSeries(seriesNoBounds);
+                savedMeasurement.setValue(new BigDecimal("999999.99"));
+                savedMeasurement.setTimestamp(testTimestamp);
+                savedMeasurement.setCreatedBy(testUser);
+
+                when(userRepository.findByUsername("admin")).thenReturn(Optional.of(testUser));
+                when(seriesRepository.findById(3)).thenReturn(Optional.of(seriesNoBounds));
+                when(measurementRepository.save(any(Measurement.class))).thenReturn(savedMeasurement);
+
+                // Act
+                MeasurementResponse result = measurementService.createMeasurement(request, "admin");
+
+                // Assert
+                assertThat(result).isNotNull();
+                assertThat(result.getValue()).isEqualByComparingTo(new BigDecimal("999999.99"));
+                verify(measurementRepository, times(1)).save(any(Measurement.class));
+            }
+
+            @Test
+            @DisplayName("Should allow negative values when series has no bounds")
+            void shouldAllowNegativeValuesWhenSeriesHasNoBounds() {
+                // Arrange
+                MeasurementRequest request = new MeasurementRequest(
+                        3,
+                        new BigDecimal("-999999.99"),
+                        testTimestamp
+                );
+
+                Measurement savedMeasurement = new Measurement();
+                savedMeasurement.setId(1);
+                savedMeasurement.setSeries(seriesNoBounds);
+                savedMeasurement.setValue(new BigDecimal("-999999.99"));
+                savedMeasurement.setTimestamp(testTimestamp);
+                savedMeasurement.setCreatedBy(testUser);
+
+                when(userRepository.findByUsername("admin")).thenReturn(Optional.of(testUser));
+                when(seriesRepository.findById(3)).thenReturn(Optional.of(seriesNoBounds));
+                when(measurementRepository.save(any(Measurement.class))).thenReturn(savedMeasurement);
+
+                // Act
+                MeasurementResponse result = measurementService.createMeasurement(request, "admin");
+
+                // Assert
+                assertThat(result).isNotNull();
+                assertThat(result.getValue()).isEqualByComparingTo(new BigDecimal("-999999.99"));
+                verify(measurementRepository, times(1)).save(any(Measurement.class));
+            }
+        }
+
+        @Nested
+        @DisplayName("Update Measurement Validation")
+        class UpdateMeasurementValidation {
+
+            @Test
+            @DisplayName("Should successfully update measurement with value within bounds")
+            void shouldSuccessfullyUpdateMeasurementWithValueWithinBounds() {
+                // Arrange
+                Measurement existingMeasurement = new Measurement();
+                existingMeasurement.setId(1);
+                existingMeasurement.setSeries(seriesWithBounds);
+                existingMeasurement.setValue(new BigDecimal("50.00"));
+                existingMeasurement.setTimestamp(testTimestamp);
+                existingMeasurement.setCreatedBy(testUser);
+
+                MeasurementRequest request = new MeasurementRequest(
+                        2,
+                        new BigDecimal("75.00"),
+                        testTimestamp.plusHours(1)
+                );
+
+                Measurement updatedMeasurement = new Measurement();
+                updatedMeasurement.setId(1);
+                updatedMeasurement.setSeries(seriesWithBounds);
+                updatedMeasurement.setValue(new BigDecimal("75.00"));
+                updatedMeasurement.setTimestamp(testTimestamp.plusHours(1));
+                updatedMeasurement.setCreatedBy(testUser);
+
+                when(measurementRepository.findById(1)).thenReturn(Optional.of(existingMeasurement));
+                when(seriesRepository.findById(2)).thenReturn(Optional.of(seriesWithBounds));
+                when(measurementRepository.save(any(Measurement.class))).thenReturn(updatedMeasurement);
+
+                // Act
+                MeasurementResponse result = measurementService.updateMeasurement(1, request);
+
+                // Assert
+                assertThat(result).isNotNull();
+                assertThat(result.getValue()).isEqualByComparingTo(new BigDecimal("75.00"));
+                verify(measurementRepository, times(1)).save(any(Measurement.class));
+            }
+
+            @Test
+            @DisplayName("Should successfully update measurement with value at minimum")
+            void shouldSuccessfullyUpdateMeasurementWithValueAtMinimum() {
+                // Arrange
+                Measurement existingMeasurement = new Measurement();
+                existingMeasurement.setId(1);
+                existingMeasurement.setSeries(seriesWithBounds);
+                existingMeasurement.setValue(new BigDecimal("50.00"));
+                existingMeasurement.setTimestamp(testTimestamp);
+                existingMeasurement.setCreatedBy(testUser);
+
+                MeasurementRequest request = new MeasurementRequest(
+                        null,
+                        new BigDecimal("0.00"),
+                        testTimestamp.plusHours(1)
+                );
+
+                Measurement updatedMeasurement = new Measurement();
+                updatedMeasurement.setId(1);
+                updatedMeasurement.setSeries(seriesWithBounds);
+                updatedMeasurement.setValue(new BigDecimal("0.00"));
+                updatedMeasurement.setTimestamp(testTimestamp.plusHours(1));
+                updatedMeasurement.setCreatedBy(testUser);
+
+                when(measurementRepository.findById(1)).thenReturn(Optional.of(existingMeasurement));
+                when(measurementRepository.save(any(Measurement.class))).thenReturn(updatedMeasurement);
+
+                // Act
+                MeasurementResponse result = measurementService.updateMeasurement(1, request);
+
+                // Assert
+                assertThat(result).isNotNull();
+                assertThat(result.getValue()).isEqualByComparingTo(new BigDecimal("0.00"));
+                verify(measurementRepository, times(1)).save(any(Measurement.class));
+            }
+
+            @Test
+            @DisplayName("Should successfully update measurement with value at maximum")
+            void shouldSuccessfullyUpdateMeasurementWithValueAtMaximum() {
+                // Arrange
+                Measurement existingMeasurement = new Measurement();
+                existingMeasurement.setId(1);
+                existingMeasurement.setSeries(seriesWithBounds);
+                existingMeasurement.setValue(new BigDecimal("50.00"));
+                existingMeasurement.setTimestamp(testTimestamp);
+                existingMeasurement.setCreatedBy(testUser);
+
+                MeasurementRequest request = new MeasurementRequest(
+                        null,
+                        new BigDecimal("100.00"),
+                        testTimestamp.plusHours(1)
+                );
+
+                Measurement updatedMeasurement = new Measurement();
+                updatedMeasurement.setId(1);
+                updatedMeasurement.setSeries(seriesWithBounds);
+                updatedMeasurement.setValue(new BigDecimal("100.00"));
+                updatedMeasurement.setTimestamp(testTimestamp.plusHours(1));
+                updatedMeasurement.setCreatedBy(testUser);
+
+                when(measurementRepository.findById(1)).thenReturn(Optional.of(existingMeasurement));
+                when(measurementRepository.save(any(Measurement.class))).thenReturn(updatedMeasurement);
+
+                // Act
+                MeasurementResponse result = measurementService.updateMeasurement(1, request);
+
+                // Assert
+                assertThat(result).isNotNull();
+                assertThat(result.getValue()).isEqualByComparingTo(new BigDecimal("100.00"));
+                verify(measurementRepository, times(1)).save(any(Measurement.class));
+            }
+
+            @Test
+            @DisplayName("Should throw ValidationException when updating with value below minimum")
+            void shouldThrowValidationExceptionWhenUpdatingWithValueBelowMinimum() {
+                // Arrange
+                Measurement existingMeasurement = new Measurement();
+                existingMeasurement.setId(1);
+                existingMeasurement.setSeries(seriesWithBounds);
+                existingMeasurement.setValue(new BigDecimal("50.00"));
+                existingMeasurement.setTimestamp(testTimestamp);
+                existingMeasurement.setCreatedBy(testUser);
+
+                MeasurementRequest request = new MeasurementRequest(
+                        null,
+                        new BigDecimal("-5.00"),
+                        testTimestamp.plusHours(1)
+                );
+
+                when(measurementRepository.findById(1)).thenReturn(Optional.of(existingMeasurement));
+
+                // Act & Assert
+                assertThatThrownBy(() -> measurementService.updateMeasurement(1, request))
+                        .isInstanceOf(ValidationException.class)
+                        .hasMessageContaining("below the minimum allowed value")
+                        .hasMessageContaining("-5.00")
+                        .hasMessageContaining("0.00");
+
+                verify(measurementRepository, never()).save(any(Measurement.class));
+            }
+
+            @Test
+            @DisplayName("Should throw ValidationException when updating with value above maximum")
+            void shouldThrowValidationExceptionWhenUpdatingWithValueAboveMaximum() {
+                // Arrange
+                Measurement existingMeasurement = new Measurement();
+                existingMeasurement.setId(1);
+                existingMeasurement.setSeries(seriesWithBounds);
+                existingMeasurement.setValue(new BigDecimal("50.00"));
+                existingMeasurement.setTimestamp(testTimestamp);
+                existingMeasurement.setCreatedBy(testUser);
+
+                MeasurementRequest request = new MeasurementRequest(
+                        null,
+                        new BigDecimal("200.00"),
+                        testTimestamp.plusHours(1)
+                );
+
+                when(measurementRepository.findById(1)).thenReturn(Optional.of(existingMeasurement));
+
+                // Act & Assert
+                assertThatThrownBy(() -> measurementService.updateMeasurement(1, request))
+                        .isInstanceOf(ValidationException.class)
+                        .hasMessageContaining("exceeds the maximum allowed value")
+                        .hasMessageContaining("200.00")
+                        .hasMessageContaining("100.00");
+
+                verify(measurementRepository, never()).save(any(Measurement.class));
+            }
+
+            @Test
+            @DisplayName("Should validate against new series bounds when changing series")
+            void shouldValidateAgainstNewSeriesBoundsWhenChangingSeries() {
+                // Arrange - existing measurement in unbounded series
+                Measurement existingMeasurement = new Measurement();
+                existingMeasurement.setId(1);
+                existingMeasurement.setSeries(seriesNoBounds);
+                existingMeasurement.setValue(new BigDecimal("500.00"));
+                existingMeasurement.setTimestamp(testTimestamp);
+                existingMeasurement.setCreatedBy(testUser);
+
+                // Try to move to bounded series with a value that's out of bounds
+                MeasurementRequest request = new MeasurementRequest(
+                        2,
+                        new BigDecimal("500.00"),
+                        testTimestamp.plusHours(1)
+                );
+
+                when(measurementRepository.findById(1)).thenReturn(Optional.of(existingMeasurement));
+                when(seriesRepository.findById(2)).thenReturn(Optional.of(seriesWithBounds));
+
+                // Act & Assert
+                assertThatThrownBy(() -> measurementService.updateMeasurement(1, request))
+                        .isInstanceOf(ValidationException.class)
+                        .hasMessageContaining("exceeds the maximum allowed value")
+                        .hasMessageContaining("500.00")
+                        .hasMessageContaining("100.00")
+                        .hasMessageContaining("Bounded Temperature");
+
+                verify(measurementRepository, never()).save(any(Measurement.class));
+            }
+
+            @Test
+            @DisplayName("Should allow updating from bounded to unbounded series with out-of-bounds value")
+            void shouldAllowUpdatingFromBoundedToUnboundedSeriesWithOutOfBoundsValue() {
+                // Arrange - existing measurement in bounded series
+                Measurement existingMeasurement = new Measurement();
+                existingMeasurement.setId(1);
+                existingMeasurement.setSeries(seriesWithBounds);
+                existingMeasurement.setValue(new BigDecimal("50.00"));
+                existingMeasurement.setTimestamp(testTimestamp);
+                existingMeasurement.setCreatedBy(testUser);
+
+                // Move to unbounded series with a previously invalid value
+                MeasurementRequest request = new MeasurementRequest(
+                        3,
+                        new BigDecimal("500.00"),
+                        testTimestamp.plusHours(1)
+                );
+
+                Measurement updatedMeasurement = new Measurement();
+                updatedMeasurement.setId(1);
+                updatedMeasurement.setSeries(seriesNoBounds);
+                updatedMeasurement.setValue(new BigDecimal("500.00"));
+                updatedMeasurement.setTimestamp(testTimestamp.plusHours(1));
+                updatedMeasurement.setCreatedBy(testUser);
+
+                when(measurementRepository.findById(1)).thenReturn(Optional.of(existingMeasurement));
+                when(seriesRepository.findById(3)).thenReturn(Optional.of(seriesNoBounds));
+                when(measurementRepository.save(any(Measurement.class))).thenReturn(updatedMeasurement);
+
+                // Act
+                MeasurementResponse result = measurementService.updateMeasurement(1, request);
+
+                // Assert
+                assertThat(result).isNotNull();
+                assertThat(result.getValue()).isEqualByComparingTo(new BigDecimal("500.00"));
+                verify(measurementRepository, times(1)).save(any(Measurement.class));
+            }
+        }
+
+        @Nested
+        @DisplayName("Series With Only Min or Only Max Bound")
+        class PartialBoundsValidation {
+
+            private Series seriesOnlyMin;
+            private Series seriesOnlyMax;
+
+            @BeforeEach
+            void setUpPartialBounds() {
+                // Series with only min bound
+                seriesOnlyMin = new Series();
+                seriesOnlyMin.setId(4);
+                seriesOnlyMin.setName("Min Only Series");
+                seriesOnlyMin.setMinValue(new BigDecimal("0.00"));
+                seriesOnlyMin.setMaxValue(null);
+                seriesOnlyMin.setCreatedBy(testUser);
+                seriesOnlyMin.setCreatedAt(testTimestamp);
+
+                // Series with only max bound
+                seriesOnlyMax = new Series();
+                seriesOnlyMax.setId(5);
+                seriesOnlyMax.setName("Max Only Series");
+                seriesOnlyMax.setMinValue(null);
+                seriesOnlyMax.setMaxValue(new BigDecimal("100.00"));
+                seriesOnlyMax.setCreatedBy(testUser);
+                seriesOnlyMax.setCreatedAt(testTimestamp);
+            }
+
+            @Test
+            @DisplayName("Should allow any value above min when only min is set")
+            void shouldAllowAnyValueAboveMinWhenOnlyMinIsSet() {
+                // Arrange
+                MeasurementRequest request = new MeasurementRequest(
+                        4,
+                        new BigDecimal("999999.99"),
+                        testTimestamp
+                );
+
+                Measurement savedMeasurement = new Measurement();
+                savedMeasurement.setId(1);
+                savedMeasurement.setSeries(seriesOnlyMin);
+                savedMeasurement.setValue(new BigDecimal("999999.99"));
+                savedMeasurement.setTimestamp(testTimestamp);
+                savedMeasurement.setCreatedBy(testUser);
+
+                when(userRepository.findByUsername("admin")).thenReturn(Optional.of(testUser));
+                when(seriesRepository.findById(4)).thenReturn(Optional.of(seriesOnlyMin));
+                when(measurementRepository.save(any(Measurement.class))).thenReturn(savedMeasurement);
+
+                // Act
+                MeasurementResponse result = measurementService.createMeasurement(request, "admin");
+
+                // Assert
+                assertThat(result).isNotNull();
+                assertThat(result.getValue()).isEqualByComparingTo(new BigDecimal("999999.99"));
+            }
+
+            @Test
+            @DisplayName("Should reject value below min when only min is set")
+            void shouldRejectValueBelowMinWhenOnlyMinIsSet() {
+                // Arrange
+                MeasurementRequest request = new MeasurementRequest(
+                        4,
+                        new BigDecimal("-1.00"),
+                        testTimestamp
+                );
+
+                when(userRepository.findByUsername("admin")).thenReturn(Optional.of(testUser));
+                when(seriesRepository.findById(4)).thenReturn(Optional.of(seriesOnlyMin));
+
+                // Act & Assert
+                assertThatThrownBy(() -> measurementService.createMeasurement(request, "admin"))
+                        .isInstanceOf(ValidationException.class)
+                        .hasMessageContaining("below the minimum allowed value");
+
+                verify(measurementRepository, never()).save(any(Measurement.class));
+            }
+
+            @Test
+            @DisplayName("Should allow any value below max when only max is set")
+            void shouldAllowAnyValueBelowMaxWhenOnlyMaxIsSet() {
+                // Arrange
+                MeasurementRequest request = new MeasurementRequest(
+                        5,
+                        new BigDecimal("-999999.99"),
+                        testTimestamp
+                );
+
+                Measurement savedMeasurement = new Measurement();
+                savedMeasurement.setId(1);
+                savedMeasurement.setSeries(seriesOnlyMax);
+                savedMeasurement.setValue(new BigDecimal("-999999.99"));
+                savedMeasurement.setTimestamp(testTimestamp);
+                savedMeasurement.setCreatedBy(testUser);
+
+                when(userRepository.findByUsername("admin")).thenReturn(Optional.of(testUser));
+                when(seriesRepository.findById(5)).thenReturn(Optional.of(seriesOnlyMax));
+                when(measurementRepository.save(any(Measurement.class))).thenReturn(savedMeasurement);
+
+                // Act
+                MeasurementResponse result = measurementService.createMeasurement(request, "admin");
+
+                // Assert
+                assertThat(result).isNotNull();
+                assertThat(result.getValue()).isEqualByComparingTo(new BigDecimal("-999999.99"));
+            }
+
+            @Test
+            @DisplayName("Should reject value above max when only max is set")
+            void shouldRejectValueAboveMaxWhenOnlyMaxIsSet() {
+                // Arrange
+                MeasurementRequest request = new MeasurementRequest(
+                        5,
+                        new BigDecimal("101.00"),
+                        testTimestamp
+                );
+
+                when(userRepository.findByUsername("admin")).thenReturn(Optional.of(testUser));
+                when(seriesRepository.findById(5)).thenReturn(Optional.of(seriesOnlyMax));
+
+                // Act & Assert
+                assertThatThrownBy(() -> measurementService.createMeasurement(request, "admin"))
+                        .isInstanceOf(ValidationException.class)
+                        .hasMessageContaining("exceeds the maximum allowed value");
+
+                verify(measurementRepository, never()).save(any(Measurement.class));
+            }
+        }
+
+        @Nested
+        @DisplayName("BigDecimal Precision and Edge Cases")
+        class BigDecimalPrecisionTests {
+
+            @Test
+            @DisplayName("Should handle values with different scales in comparison")
+            void shouldHandleValuesWithDifferentScalesInComparison() {
+                // Arrange - Series with 2 decimal places
+                Series series = new Series();
+                series.setId(6);
+                series.setName("Precise Series");
+                series.setMinValue(new BigDecimal("0.00"));
+                series.setMaxValue(new BigDecimal("100.00"));
+                series.setCreatedBy(testUser);
+
+                // Value with 3 decimal places that should be valid
+                MeasurementRequest request = new MeasurementRequest(
+                        6,
+                        new BigDecimal("50.123"),
+                        testTimestamp
+                );
+
+                Measurement savedMeasurement = new Measurement();
+                savedMeasurement.setId(1);
+                savedMeasurement.setSeries(series);
+                savedMeasurement.setValue(new BigDecimal("50.123"));
+                savedMeasurement.setTimestamp(testTimestamp);
+                savedMeasurement.setCreatedBy(testUser);
+
+                when(userRepository.findByUsername("admin")).thenReturn(Optional.of(testUser));
+                when(seriesRepository.findById(6)).thenReturn(Optional.of(series));
+                when(measurementRepository.save(any(Measurement.class))).thenReturn(savedMeasurement);
+
+                // Act
+                MeasurementResponse result = measurementService.createMeasurement(request, "admin");
+
+                // Assert
+                assertThat(result).isNotNull();
+                assertThat(result.getValue()).isEqualByComparingTo(new BigDecimal("50.123"));
+            }
+
+            @Test
+            @DisplayName("Should correctly compare BigDecimal with different representations")
+            void shouldCorrectlyCompareBigDecimalWithDifferentRepresentations() {
+                // Arrange - Series with bounds
+                Series series = new Series();
+                series.setId(6);
+                series.setName("Precise Series");
+                series.setMinValue(new BigDecimal("0.00"));
+                series.setMaxValue(new BigDecimal("100"));
+                series.setCreatedBy(testUser);
+
+                // Value equal to max but different representation
+                MeasurementRequest request = new MeasurementRequest(
+                        6,
+                        new BigDecimal("100.00"),
+                        testTimestamp
+                );
+
+                Measurement savedMeasurement = new Measurement();
+                savedMeasurement.setId(1);
+                savedMeasurement.setSeries(series);
+                savedMeasurement.setValue(new BigDecimal("100.00"));
+                savedMeasurement.setTimestamp(testTimestamp);
+                savedMeasurement.setCreatedBy(testUser);
+
+                when(userRepository.findByUsername("admin")).thenReturn(Optional.of(testUser));
+                when(seriesRepository.findById(6)).thenReturn(Optional.of(series));
+                when(measurementRepository.save(any(Measurement.class))).thenReturn(savedMeasurement);
+
+                // Act
+                MeasurementResponse result = measurementService.createMeasurement(request, "admin");
+
+                // Assert - Should pass because compareTo handles different scales correctly
+                assertThat(result).isNotNull();
+                assertThat(result.getValue()).isEqualByComparingTo(new BigDecimal("100"));
+            }
+
+            @Test
+            @DisplayName("Should handle zero value correctly")
+            void shouldHandleZeroValueCorrectly() {
+                // Arrange
+                MeasurementRequest request = new MeasurementRequest(
+                        2,
+                        BigDecimal.ZERO,
+                        testTimestamp
+                );
+
+                Measurement savedMeasurement = new Measurement();
+                savedMeasurement.setId(1);
+                savedMeasurement.setSeries(seriesWithBounds);
+                savedMeasurement.setValue(BigDecimal.ZERO);
+                savedMeasurement.setTimestamp(testTimestamp);
+                savedMeasurement.setCreatedBy(testUser);
+
+                when(userRepository.findByUsername("admin")).thenReturn(Optional.of(testUser));
+                when(seriesRepository.findById(2)).thenReturn(Optional.of(seriesWithBounds));
+                when(measurementRepository.save(any(Measurement.class))).thenReturn(savedMeasurement);
+
+                // Act
+                MeasurementResponse result = measurementService.createMeasurement(request, "admin");
+
+                // Assert
+                assertThat(result).isNotNull();
+                assertThat(result.getValue()).isEqualByComparingTo(BigDecimal.ZERO);
+            }
         }
     }
 }

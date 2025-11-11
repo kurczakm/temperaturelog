@@ -58,3 +58,40 @@ body {
     top: 0;
   }
 }
+
+/* Global print styles */
+@media print {
+  // Set print-appropriate defaults
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  // Hide screen-only elements
+  .skip-link {
+    display: none !important;
+  }
+
+  // Reset dark theme for structural elements
+  header, nav, main, footer, section, article, aside {
+    background-color: white !important;
+    color: black !important;
+  }
+
+  // Typography defaults - ensure readability
+  h1, h2, h3, h4, h5, h6, p, span, div, td, th, label {
+    color: black !important;
+  }
+
+  // Utility class for color preservation
+  .print-color-preserve {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  // Remove box shadows and text shadows for print
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+}

@@ -22,7 +22,7 @@ The backend uses JWT (JSON Web Token) for authentication.
 Response includes:
 - `token`: JWT token for subsequent authenticated requests
 - `username`: Authenticated user's username
-- `role`: User's role (ADMIN or USER)
+- `role`: User's role (ADMIN)
 - `expiresIn`: Token expiration time in milliseconds
 
 ## Requirements
@@ -30,3 +30,7 @@ Response includes:
 - Java 21,
 To run the application, you have to export the `JAVA_HOME` environment variable to the path of your JDK.
 Run command `export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64/` to set the environment variable before running the application.
+
+## Roles
+There is only one role for authenticated users: ADMIN. But some endpoints are also available for unauthenticated users.
+Add and edit can only ADMIN. But preview data can both ADMIN and unauthenticated user.

@@ -1,6 +1,6 @@
 import { Component, OnInit, signal, DestroyRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MeasurementService } from '../../services/measurement.service';
@@ -26,6 +26,40 @@ export class MeasurementFormComponent implements OnInit {
 
   private destroyRef = inject(DestroyRef);
 
+  // Validator methods defined as properties to be available in constructor
+  private numberValidator = (): ValidatorFn => {
+    return (control: AbstractControl): ValidationErrors | null => {
+      if (!control.value) {
+        return null;
+      }
+      const value = parseFloat(control.value);
+      return isNaN(value) ? { invalidNumber: true } : null;
+    };
+  };
+
+  private rangeValidator = (min: number, max: number): ValidatorFn => {
+    return (control: AbstractControl): ValidationErrors | null => {
+      if (!control.value) {
+        return null; // Don't validate empty values (handled by required validator)
+      }
+
+      const value = parseFloat(control.value);
+      if (isNaN(value)) {
+        return null; // Don't validate non-numeric values
+      }
+
+      if (value < min) {
+        return { belowMin: { min, actual: value } };
+      }
+
+      if (value > max) {
+        return { aboveMax: { max, actual: value } };
+      }
+
+      return null;
+    };
+  };
+
   constructor(
     private fb: FormBuilder,
     private measurementService: MeasurementService,
@@ -37,8 +71,6 @@ export class MeasurementFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadAllSeries();
-
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.measurementId = parseInt(id, 10);
@@ -48,9 +80,10 @@ export class MeasurementFormComponent implements OnInit {
       const seriesId = this.route.snapshot.queryParamMap.get('seriesId');
       if (seriesId) {
         this.form.patchValue({ seriesId: parseInt(seriesId, 10) });
-        this.onSeriesChange(parseInt(seriesId, 10));
       }
     }
+
+    this.loadAllSeries();
   }
 
   initForm(): void {
@@ -61,7 +94,7 @@ export class MeasurementFormComponent implements OnInit {
 
     this.form = this.fb.group({
       seriesId: ['', Validators.required],
-      value: ['', [Validators.required]],
+      value: ['', [Validators.required, this.numberValidator()]],
       timestamp: [localDateTime, Validators.required]
     });
 
@@ -72,6 +105,11 @@ export class MeasurementFormComponent implements OnInit {
           this.onSeriesChange(parseInt(seriesId, 10));
         }
       });
+
+    // Clear error when form changes
+    this.form.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.error.set(null));
   }
 
   loadAllSeries(): void {
@@ -80,6 +118,11 @@ export class MeasurementFormComponent implements OnInit {
       .subscribe({
         next: (data) => {
           this.allSeries.set(data);
+          // Apply validators after series are loaded
+          const currentSeriesId = this.form.get('seriesId')?.value;
+          if (currentSeriesId) {
+            this.onSeriesChange(parseInt(currentSeriesId, 10));
+          }
         },
         error: (err) => {
           this.error.set(err.error?.message || 'Failed to load series');
@@ -90,6 +133,28 @@ export class MeasurementFormComponent implements OnInit {
   onSeriesChange(seriesId: number): void {
     const series = this.allSeries().find(s => s.id === seriesId);
     this.selectedSeries.set(series || null);
+
+    // Update value field validators when series changes
+    if (series) {
+      this.updateValueValidators(series.minValue, series.maxValue);
+    }
+  }
+
+  private updateValueValidators(minValue: number, maxValue: number): void {
+    const valueControl = this.form.get('value');
+    if (valueControl) {
+      valueControl.setValidators([
+        Validators.required,
+        this.numberValidator(),
+        this.rangeValidator(minValue, maxValue)
+      ]);
+      valueControl.updateValueAndValidity();
+
+      // In edit mode, mark as touched to show errors immediately
+      if (this.isEditMode() && valueControl.value) {
+        valueControl.markAsTouched();
+      }
+    }
   }
 
   loadMeasurement(id: number): void {
@@ -107,7 +172,7 @@ export class MeasurementFormComponent implements OnInit {
             value: measurement.value,
             timestamp: localDateTime
           });
-          this.onSeriesChange(measurement.seriesId);
+          // onSeriesChange will be called automatically after series are loaded
           this.loading.set(false);
         },
         error: (err) => {
@@ -170,36 +235,54 @@ export class MeasurementFormComponent implements OnInit {
     if (field.errors['required']) {
       return 'This field is required';
     }
+
+    if (field.errors['invalidNumber']) {
+      return 'Please enter a valid number';
+    }
+
+    if (field.errors['belowMin']) {
+      const min = field.errors['belowMin'].min;
+      return `Value must be at least ${min}°C`;
+    }
+
+    if (field.errors['aboveMax']) {
+      const max = field.errors['aboveMax'].max;
+      return `Value must not exceed ${max}°C`;
+    }
+
     return null;
   }
 
   isValueOutOfRange(): boolean {
-    const value = this.form.get('value')?.value;
-    const series = this.selectedSeries();
-
-    if (!value || !series) {
-      return false;
-    }
-
-    const numValue = parseFloat(value);
-    return numValue < series.minValue || numValue > series.maxValue;
+    const valueControl = this.form.get('value');
+    return !!(valueControl?.errors?.['belowMin'] || valueControl?.errors?.['aboveMax']);
   }
 
   getValueStatus(): string | null {
-    const value = this.form.get('value')?.value;
+    const valueControl = this.form.get('value');
     const series = this.selectedSeries();
 
-    if (!value || !series) {
+    if (!valueControl?.value || !series) {
       return null;
     }
 
-    const numValue = parseFloat(value);
-    if (numValue < series.minValue) {
-      return `Below minimum (${series.minValue}°C)`;
+    // Leverage existing validation errors
+    if (valueControl.errors?.['belowMin']) {
+      const min = valueControl.errors['belowMin'].min;
+      return `Below minimum (${min}°C)`;
     }
-    if (numValue > series.maxValue) {
-      return `Above maximum (${series.maxValue}°C)`;
+
+    if (valueControl.errors?.['aboveMax']) {
+      const max = valueControl.errors['aboveMax'].max;
+      return `Above maximum (${max}°C)`;
     }
-    return 'Within valid range';
+
+    // Only show success status if value is valid and not empty
+    const numValue = parseFloat(valueControl.value);
+    if (!isNaN(numValue)) {
+      return 'Within valid range';
+    }
+
+    return null;
   }
 }

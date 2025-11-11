@@ -75,7 +75,6 @@
                 <th scope="col">Series</th>
               }
               <th scope="col">Value</th>
-              <th scope="col">Status</th>
               <th scope="col">Created By</th>
               @if (isAdmin()) {
                 <th scope="col">Actions</th>
@@ -94,17 +93,6 @@
                 }
                 <td class="value">
                   <span class="temperature">{{ m.value }}°C</span>
-                </td>
-                <td>
-                  <span class="status-badge" [class]="getValueStatus(m.value)">
-                    @if (getValueStatus(m.value) === 'low') {
-                      ❄️ Below Range
-                    } @else if (getValueStatus(m.value) === 'high') {
-                      🔥 Above Range
-                    } @else {
-                      ✓ Normal
-                    }
-                  </span>
                 </td>
                 <td>{{ m.createdBy }}</td>
                 @if (isAdmin()) {

@@ -9,15 +9,18 @@ This is a temperature tracking system with PostgreSQL database backend, containe
 ## Database Architecture
 
 The schema consists of four main tables:
-- `roles` - User role definitions (ADMIN, USER)
+- `roles` - User role definitions (For now there is only one rule: ADMIN, but in the future there can be more)
 - `users` - User accounts with authentication
 - `series` - Measurement series with metadata (name, description, min/max values, color, icon)
 - `measurements` - Individual data points linked to series with timestamps
 
 Key relationships:
 - Users have roles (many-to-one)
-- Series are created by users and track min/max bounds for validation
-- Measurements belong to series (with CASCADE delete) and are created by users with role ADMIN
+- Series track min/max bounds for validation
+- Measurements belong to series (with CASCADE delete)
+
+## Roles
+Series and masurements are managed by users with role ADMIN.
 
 ## Application Architecture
 
@@ -85,7 +88,6 @@ Navigate to http://localhost:8080 after starting services. Use:
 
 - **Backend API** (port 8081): Spring Boot REST API with JWT authentication
 - **PostgreSQL** (port 5432): Main database with password 'example'
-- **Adminer** (port 8080): Web-based database management interface
 
 ## Authentication
 
@@ -119,3 +121,7 @@ Authorization: Bearer <your-jwt-token>
 - Token expiration is set to 24 hours by default
 - Passwords are BCrypt encoded
 - CORS is configured for Angular frontend (http://localhost:4200)
+
+## Roles
+There is only one role for authenticated users: ADMIN. But some actions are also available for unauthenticated users.
+Add and edit can only ADMIN. But preview data can both ADMIN and unauthenticated user.
