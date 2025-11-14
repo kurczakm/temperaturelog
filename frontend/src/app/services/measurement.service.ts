@@ -17,10 +17,15 @@ export class MeasurementService {
 
   private getAuthHeaders(): HttpHeaders {
     const token = this.auth.getToken();
-    return new HttpHeaders({
-      'Authorization': `Bearer ${token}`,
+    const headers: { [key: string]: string } = {
       'Content-Type': 'application/json'
-    });
+    };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    return new HttpHeaders(headers);
   }
 
   getAllMeasurements(): Observable<MeasurementResponse[]> {

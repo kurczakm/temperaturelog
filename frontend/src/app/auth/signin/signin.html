@@ -7,8 +7,12 @@
     </header>
 
     <form [formGroup]="signInForm" (ngSubmit)="onSubmit()" class="signin-form" aria-labelledby="signin-title">
+      <div class="visually-hidden" role="status" aria-live="polite" aria-atomic="true">
+        {{ isLoading() ? 'Signing in, please wait' : '' }}
+      </div>
+
       @if (errorMessage()) {
-        <div class="error-message" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="error-message" role="alert" aria-live="polite" aria-atomic="true">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
             <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2"/>
             <path d="M10 6 L10 11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -26,16 +30,16 @@
           formControlName="username"
           placeholder="Enter your username"
           autocomplete="username"
-          [class.invalid]="username?.invalid && username?.touched"
-          [attr.aria-invalid]="username?.invalid && username?.touched"
-          [attr.aria-describedby]="username?.invalid && username?.touched ? 'username-error' : null"
+          [class.invalid]="username.invalid && username.touched"
+          [attr.aria-invalid]="username.invalid && username.touched"
+          [attr.aria-describedby]="username.invalid && username.touched ? 'username-error' : null"
         />
-        @if (username?.invalid && username?.touched) {
+        @if (username.invalid && username.touched) {
           <span class="field-error" id="username-error" role="alert">
-            @if (username?.errors?.['required']) {
+            @if (username.errors?.['required']) {
               Username is required
             }
-            @if (username?.errors?.['minlength']) {
+            @if (username.errors?.['minlength']) {
               Username must be at least 3 characters
             }
           </span>
@@ -51,9 +55,9 @@
             formControlName="password"
             placeholder="Enter your password"
             autocomplete="current-password"
-            [class.invalid]="password?.invalid && password?.touched"
-            [attr.aria-invalid]="password?.invalid && password?.touched"
-            [attr.aria-describedby]="password?.invalid && password?.touched ? 'password-error' : null"
+            [class.invalid]="password.invalid && password.touched"
+            [attr.aria-invalid]="password.invalid && password.touched"
+            [attr.aria-describedby]="password.invalid && password.touched ? 'password-error' : null"
           />
           <button
             type="button"
@@ -76,12 +80,12 @@
             }
           </button>
         </div>
-        @if (password?.invalid && password?.touched) {
+        @if (password.invalid && password.touched) {
           <span class="field-error" id="password-error" role="alert">
-            @if (password?.errors?.['required']) {
+            @if (password.errors?.['required']) {
               Password is required
             }
-            @if (password?.errors?.['minlength']) {
+            @if (password.errors?.['minlength']) {
               Password must be at least 6 characters
             }
           </span>
@@ -100,6 +104,27 @@
           <span>Sign In</span>
         }
       </button>
+
+      <div class="signin-divider">
+        <span>or</span>
+      </div>
+
+      <a
+        routerLink="/chart"
+        class="guest-link"
+        role="button"
+        aria-label="Continue as guest to preview temperature data"
+        tabindex="0"
+      >
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+          <path d="M3 3 L3 17 L17 17 L17 3 Z" stroke="currentColor" stroke-width="2" fill="none"/>
+          <path d="M7 12 L9 10 L11 13 L15 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+        <div class="guest-link-content">
+          <span class="guest-link-title">Continue as Guest</span>
+          <span class="guest-link-subtitle">Preview temperature data without signing in</span>
+        </div>
+      </a>
     </form>
   </main>
 </div>

@@ -1,29 +1,47 @@
-import { Component, signal } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Auth } from '../auth';
-import { Router } from '@angular/router';
+import { Component, signal, DestroyRef, inject, ChangeDetectionStrategy } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormControl } from '@angular/forms';
+import { Auth, SignInRequest } from '../auth';
+import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
+interface SignInForm {
+  username: FormControl<string>;
+  password: FormControl<string>;
+}
 
 @Component({
   selector: 'app-signin',
-  imports: [ReactiveFormsModule, CommonModule],
+  imports: [ReactiveFormsModule, CommonModule, RouterModule],
   templateUrl: './signin.html',
   styleUrl: './signin.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Signin {
-  signInForm: FormGroup;
+export class SigninComponent {
+  private readonly MIN_USERNAME_LENGTH = 3;
+  private readonly MIN_PASSWORD_LENGTH = 6;
+
+  private fb = inject(FormBuilder);
+  private authService = inject(Auth);
+  private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
+
+  signInForm: FormGroup<SignInForm>;
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
   showPassword = signal(false);
 
-  constructor(
-    private fb: FormBuilder,
-    private authService: Auth,
-    private router: Router
-  ) {
-    this.signInForm = this.fb.group({
-      username: ['', [Validators.required, Validators.minLength(3)]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+  constructor() {
+    this.signInForm = this.fb.group<SignInForm>({
+      username: this.fb.control('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.minLength(this.MIN_USERNAME_LENGTH)]
+      }),
+      password: this.fb.control('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.minLength(this.MIN_PASSWORD_LENGTH)]
+      })
     });
   }
 
@@ -33,41 +51,57 @@ export class Signin {
       return;
     }
 
+    const credentials: SignInRequest = {
+      username: this.signInForm.value.username?.trim() || '',
+      password: this.signInForm.value.password?.trim() || ''
+    };
+
     this.isLoading.set(true);
     this.errorMessage.set(null);
     this.signInForm.disable();
 
-    this.authService.signIn(this.signInForm.value).subscribe({
-      next: (response) => {
-        this.isLoading.set(false);
-        this.signInForm.enable();
-        console.log('Sign in successful', response);
-        this.router.navigate(['/series']);
-      },
-      error: (error) => {
-        this.isLoading.set(false);
-        this.signInForm.enable();
-        if (error.status === 401) {
-          this.errorMessage.set('Invalid username or password');
-        } else if (error.status === 0) {
-          this.errorMessage.set('Unable to connect to server. Please try again later.');
-        } else {
-          this.errorMessage.set('An error occurred. Please try again.');
+    this.authService.signIn(credentials)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.isLoading.set(false);
+          this.signInForm.reset();
+          this.router.navigate(['/chart']).catch(err => {
+            console.error('Navigation failed:', err);
+            this.errorMessage.set('Navigation failed. Please try again.');
+            this.signInForm.enable();
+          });
+        },
+        error: (error: HttpErrorResponse) => {
+          this.isLoading.set(false);
+          this.signInForm.enable();
+          this.handleError(error);
         }
-        console.error('Sign in error:', error);
-      }
-    });
+      });
   }
 
   togglePasswordVisibility(): void {
     this.showPassword.update(value => !value);
   }
 
-  get username() {
-    return this.signInForm.get('username');
+  get username(): FormControl<string> {
+    return this.signInForm.controls.username;
   }
 
-  get password() {
-    return this.signInForm.get('password');
+  get password(): FormControl<string> {
+    return this.signInForm.controls.password;
+  }
+
+  private handleError(error: HttpErrorResponse): void {
+    if (error.status === 401) {
+      this.errorMessage.set('Invalid username or password');
+    } else if (error.status === 429) {
+      this.errorMessage.set('Too many login attempts. Please try again later.');
+    } else if (error.status === 0) {
+      this.errorMessage.set('Unable to connect to server. Please try again later.');
+    } else {
+      this.errorMessage.set('An error occurred. Please try again.');
+    }
+    console.error('Sign in error:', error);
   }
 }

@@ -9,8 +9,15 @@ export interface MeasurementResponse {
   seriesId: number;
   value: number;
   timestamp: string;
-  createdBy: string;
+  /**
+   * User ID of the creator. Use createdByUsername for display purposes.
+   * Can be null if user was deleted or measurement was created by system.
+   */
+  createdBy: number | null;
+  /**
+   * Username of the creator for display purposes.
+   * Can be null if user information is unavailable.
+   */
+  createdByUsername: string | null;
   createdAt: string;
-  modifiedBy: string;
-  modifiedAt: string;
 }

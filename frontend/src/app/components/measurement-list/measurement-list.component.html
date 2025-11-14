@@ -1,17 +1,21 @@
 <div class="measurement-list-container">
   <div class="header">
     <div class="title-section">
-      @if (series()) {
-        <div class="series-badge" [style.background-color]="series()!.color">
-          {{ series()!.icon }}
+      @if (series(); as currentSeries) {
+        <div class="series-badge" [style.background-color]="currentSeries.color">
+          {{ currentSeries.icon }}
+        </div>
+        <div>
+          <h1>{{ currentSeries.name }} Measurements</h1>
+          @if (currentSeries.description) {
+            <p class="subtitle">{{ currentSeries.description }}</p>
+          }
+        </div>
+      } @else {
+        <div>
+          <h1>All Measurements</h1>
         </div>
       }
-      <div>
-        <h1>{{ series() ? series()!.name + ' Measurements' : 'All Measurements' }}</h1>
-        @if (series()?.description) {
-          <p class="subtitle">{{ series()!.description }}</p>
-        }
-      </div>
     </div>
     <div class="header-actions">
       @if (series()) {
@@ -28,11 +32,11 @@
     </div>
   </div>
 
-  @if (series()) {
+  @if (series(); as currentSeries) {
     <div class="series-info-card">
       <div class="info-item">
         <span class="label">Valid Range:</span>
-        <span class="value">{{ series()!.minValue }}°C - {{ series()!.maxValue }}°C</span>
+        <span class="value">{{ currentSeries.minValue }}°C - {{ currentSeries.maxValue }}°C</span>
       </div>
       <div class="info-item">
         <span class="label">Total Measurements:</span>
@@ -67,7 +71,7 @@
       </div>
     } @else {
       <div class="measurements-table-container">
-        <table class="measurements-table" role="table" aria-label="{{ series() ? series()!.name + ' measurements' : 'All measurements' }}">
+        <table class="measurements-table" role="table" [attr.aria-label]="series() ? series()!.name + ' measurements' : 'All measurements'">
           <thead>
             <tr>
               <th scope="col">Timestamp</th>
@@ -89,12 +93,23 @@
                   <div class="timestamp-short">{{ m.timestamp | date:'short' }}</div>
                 </td>
                 @if (!series()) {
-                  <td>Series #{{ m.seriesId }}</td>
+                  <td>
+                    @if (getSeriesById(m.seriesId); as seriesInfo) {
+                      <div class="series-badge-cell">
+                        <span class="series-badge" [style.background-color]="seriesInfo.color">
+                          {{ seriesInfo.icon }}
+                        </span>
+                        <span class="series-name">{{ seriesInfo.name }}</span>
+                      </div>
+                    } @else {
+                      <span class="series-unknown">Series #{{ m.seriesId }}</span>
+                    }
+                  </td>
                 }
                 <td class="value">
                   <span class="temperature">{{ m.value }}°C</span>
                 </td>
-                <td>{{ m.createdBy }}</td>
+                <td>{{ m.createdByUsername || 'Unknown' }}</td>
                 @if (isAdmin()) {
                   <td class="actions">
                     <button class="btn-sm btn-secondary" [routerLink]="['/measurements/edit', m.id]" [attr.aria-label]="'Edit measurement from ' + (m.timestamp | date:'short')">

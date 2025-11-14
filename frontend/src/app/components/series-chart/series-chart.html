@@ -216,7 +216,7 @@
                       {{ measurement.timestamp | date:'medium' }}
                     </td>
                     <td class="creator-cell">
-                      {{ measurement.createdBy }}
+                      {{ measurement.createdByUsername || 'Unknown' }}
                     </td>
                   </tr>
                 }
