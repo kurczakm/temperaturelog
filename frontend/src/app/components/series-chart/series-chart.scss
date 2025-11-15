@@ -183,7 +183,7 @@
     }
 
     .control-section {
-      background: #f8f9fa;
+      background: var(--color-background);
       padding: 1.5rem;
       border-radius: 8px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -328,13 +328,13 @@
           align-items: center;
           gap: 0.75rem;
           padding: 0.75rem;
-          background: white;
+          background: var(--color-surface);
           border-radius: 4px;
           cursor: pointer;
           transition: background 0.2s;
 
           &:hover {
-            background: #e9ecef;
+            background: var(--color-surface-elevated);
           }
 
           input[type='checkbox'] {
@@ -371,7 +371,7 @@
     .empty-state {
       text-align: center;
       padding: 4rem 2rem;
-      color: var(--color-text-secondary);
+      color: gray;
       font-size: 1.1rem;
     }
 
@@ -392,7 +392,7 @@
 
   .table-section {
     margin-top: 2rem;
-    background: white;
+    background: var(--color-background);
     padding: 2rem;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -484,6 +484,7 @@
 
       tbody {
         .measurement-row {
+          background: var(--color-surface);;
           border-bottom: 1px solid var(--color-border);
           cursor: pointer;
           transition: all 0.2s;
@@ -498,13 +499,7 @@
           }
 
           &.highlighted {
-            background: #FFF9E6;
-            border-left: 4px solid #FFD700;
-            border-right: 4px solid #FFD700;
-
-            &:hover {
-              background: #FFF3CC;
-            }
+            background: var(--color-surface-elevated);
           }
 
           td {
