@@ -597,9 +597,20 @@
       border: 1px solid #dee2e6;
       page-break-inside: avoid;
       margin-bottom: 1rem;
+      padding: 1.5rem;
 
       .chart-wrapper {
-        height: 400px;
+        height: 550px !important;
+        width: 100% !important;
+        position: relative;
+        page-break-inside: avoid;
+
+        canvas {
+          width: 100% !important;
+          height: 550px !important;
+          max-width: 100% !important;
+          display: block;
+        }
       }
     }
 

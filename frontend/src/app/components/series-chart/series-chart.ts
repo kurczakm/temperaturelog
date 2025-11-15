@@ -106,6 +106,14 @@ export class SeriesChart implements OnInit, OnDestroy {
   public lineChartOptions: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
+    layout: {
+      padding: {
+        top: 20,
+        bottom: 10,
+        left: 10,
+        right: 10,
+      },
+    },
     scales: {
       x: {
         type: 'time',
@@ -126,6 +134,7 @@ export class SeriesChart implements OnInit, OnDestroy {
           display: true,
           text: 'Temperature Value',
         },
+        grace: '5%',
       },
     },
     plugins: {
@@ -403,18 +412,49 @@ export class SeriesChart implements OnInit, OnDestroy {
     // Clear any highlights for cleaner print output
     const currentHighlight = this.highlightedMeasurement();
     this.highlightedMeasurement.set(null);
+
+    // First update to clear highlights
     this.updateChart();
 
-    // Small delay to ensure chart updates before printing
+    // Wait for the chart to fully update with cleared highlights
     setTimeout(() => {
-      window.print();
+      if (this.chart?.chart) {
+        // Destroy and recreate the chart data to ensure fresh rendering
+        this.chart.chart.data = this.lineChartData;
 
-      // Restore highlight after printing
-      if (currentHighlight) {
-        this.highlightedMeasurement.set(currentHighlight);
-        this.updateChart();
+        // Force chart to resize for print dimensions
+        this.chart.chart.resize();
+
+        // Force a complete update with animation disabled
+        this.chart.chart.update('none');
       }
-    }, 300);
+
+      // Longer delay to ensure chart is fully rendered with correct values
+      setTimeout(() => {
+        // One final update right before printing to ensure correct data
+        if (this.chart?.chart) {
+          this.chart.chart.update('none');
+        }
+
+        // Small delay before opening print dialog
+        setTimeout(() => {
+          window.print();
+
+          // Restore highlight and chart after printing
+          setTimeout(() => {
+            if (currentHighlight) {
+              this.highlightedMeasurement.set(currentHighlight);
+            }
+
+            // Resize and update chart back to normal view
+            if (this.chart?.chart) {
+              this.chart.chart.resize();
+              this.chart.chart.update('none');
+            }
+          }, 150);
+        }, 100);
+      }, 400);
+    }, 400);
   }
 
   getPeriodLabel(): string {
