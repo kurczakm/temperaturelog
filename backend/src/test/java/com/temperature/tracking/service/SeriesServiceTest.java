@@ -16,7 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -66,7 +66,7 @@ class SeriesServiceTest {
         testSeries.setMinValue(new java.math.BigDecimal("-10.00"));
         testSeries.setMaxValue(new java.math.BigDecimal("50.00"));
         testSeries.setCreatedBy(testUser);
-        testSeries.setCreatedAt(LocalDateTime.now());
+        testSeries.setCreatedAt(ZonedDateTime.now());
 
         // Setup test request
         testRequest = new SeriesRequest();
@@ -92,7 +92,7 @@ class SeriesServiceTest {
             secondSeries.setDescription("Test series for humidity measurements");
             secondSeries.setColor("#3498DB");
             secondSeries.setCreatedBy(testUser);
-            secondSeries.setCreatedAt(LocalDateTime.now());
+            secondSeries.setCreatedAt(ZonedDateTime.now());
 
             List<Series> seriesList = Arrays.asList(testSeries, secondSeries);
             when(seriesRepository.findAll()).thenReturn(seriesList);

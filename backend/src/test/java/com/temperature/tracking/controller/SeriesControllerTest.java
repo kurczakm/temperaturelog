@@ -16,16 +16,17 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -52,11 +53,11 @@ class SeriesControllerTest {
 
     private SeriesRequest testRequest;
     private SeriesResponse testResponse;
-    private LocalDateTime testDateTime;
+    private ZonedDateTime testDateTime;
 
     @BeforeEach
     void setUp() {
-        testDateTime = LocalDateTime.of(2024, 1, 15, 10, 30, 0);
+        testDateTime = ZonedDateTime.of(2024, 1, 15, 10, 30, 0, 0, ZoneId.of("UTC"));
 
         // Setup test request
         testRequest = new SeriesRequest();

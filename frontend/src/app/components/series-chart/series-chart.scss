@@ -23,12 +23,74 @@
     color: var(--color-text);
   }
 
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .signin-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #059669;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    &:hover {
+      background: #047857;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    &:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    &:focus-visible {
+      outline: 2px solid #059669;
+      outline-offset: 2px;
+    }
+
+    .signin-icon {
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+
+    .signin-text {
+      @media (max-width: 480px) {
+        display: none;
+      }
+    }
+  }
+
   .print-btn {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     padding: 0.75rem 1.5rem;
-    background: var(--color-primary);
+    background: #2563eb;
     color: white;
     border: none;
     border-radius: 4px;
@@ -39,7 +101,7 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
     &:hover:not(:disabled) {
-      background: #2563eb;
+      background: #1d4ed8;
       transform: translateY(-1px);
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
@@ -56,7 +118,7 @@
     }
 
     &:focus-visible {
-      outline: 2px solid var(--color-primary);
+      outline: 2px solid #2563eb;
       outline-offset: 2px;
     }
 
@@ -515,7 +577,8 @@
       color: #000;
     }
 
-    // Hide print button when printing
+    // Hide action buttons when printing
+    .signin-btn,
     .print-btn {
       display: none !important;
     }

@@ -8,7 +8,7 @@ import { MeasurementFormComponent } from './components/measurement-form/measurem
 import { authGuard, adminGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/chart', pathMatch: 'full' },
+  { path: '', redirectTo: '/signin', pathMatch: 'full' },
   { path: 'signin', component: SigninComponent },
   { path: 'series', component: SeriesListComponent },
   { path: 'series/new', component: SeriesFormComponent, canActivate: [adminGuard] },
@@ -16,5 +16,6 @@ export const routes: Routes = [
   { path: 'chart', component: SeriesChart },
   { path: 'measurements', component: MeasurementListComponent },
   { path: 'measurements/new', component: MeasurementFormComponent, canActivate: [adminGuard] },
-  { path: 'measurements/edit/:id', component: MeasurementFormComponent, canActivate: [adminGuard] }
+  { path: 'measurements/edit/:id', component: MeasurementFormComponent, canActivate: [adminGuard] },
+  { path: '**', redirectTo: '/signin' }
 ];

@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Data
 @NoArgsConstructor
@@ -22,5 +22,5 @@ public class MeasurementRequest {
 
     @NotNull(message = "Timestamp is required")
     @PastOrPresent(message = "Timestamp cannot be in the future")
-    private LocalDateTime timestamp;
+    private ZonedDateTime timestamp;
 }

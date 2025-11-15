@@ -20,7 +20,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -56,11 +57,11 @@ class MeasurementServiceTest {
     private User testUser;
     private Series testSeries;
     private Measurement testMeasurement;
-    private LocalDateTime testTimestamp;
+    private ZonedDateTime testTimestamp;
 
     @BeforeEach
     void setUp() {
-        testTimestamp = LocalDateTime.of(2025, 11, 8, 12, 0, 0);
+        testTimestamp = ZonedDateTime.of(2025, 11, 8, 12, 0, 0, 0, ZoneId.of("UTC"));
 
         testUser = new User();
         testUser.setId(1);
@@ -783,7 +784,7 @@ class MeasurementServiceTest {
         @DisplayName("Should handle timestamp in the future")
         void shouldHandleTimestampInTheFuture() {
             // Arrange
-            LocalDateTime futureTimestamp = LocalDateTime.now().plusYears(1);
+            ZonedDateTime futureTimestamp = ZonedDateTime.now().plusYears(1);
             MeasurementRequest request = new MeasurementRequest(
                     1,
                     new BigDecimal("23.50"),
@@ -813,7 +814,7 @@ class MeasurementServiceTest {
         @DisplayName("Should handle timestamp in the distant past")
         void shouldHandleTimestampInTheDistantPast() {
             // Arrange
-            LocalDateTime pastTimestamp = LocalDateTime.of(2000, 1, 1, 0, 0);
+            ZonedDateTime pastTimestamp = ZonedDateTime.of(2000, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
             MeasurementRequest request = new MeasurementRequest(
                     1,
                     new BigDecimal("23.50"),

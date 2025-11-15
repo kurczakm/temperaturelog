@@ -163,7 +163,9 @@ export class MeasurementFormComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (measurement) => {
-          const localDateTime = new Date(measurement.timestamp)
+          const date = new Date(measurement.timestamp);
+          date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+          const localDateTime = date
             .toISOString()
             .slice(0, 16);
 

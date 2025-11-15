@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Data
 @NoArgsConstructor
@@ -16,10 +16,10 @@ public class MeasurementResponse {
     private Integer seriesId;
     private String seriesName;
     private BigDecimal value;
-    private LocalDateTime timestamp;
+    private ZonedDateTime timestamp;
     private Integer createdBy;
     private String createdByUsername;
-    private LocalDateTime createdAt;
+    private ZonedDateTime createdAt;
 
     public static MeasurementResponse fromEntity(Measurement measurement) {
         return new MeasurementResponse(

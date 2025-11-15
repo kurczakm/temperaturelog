@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 /**
  * Data transfer object representing a Series in API responses.
@@ -25,7 +25,7 @@ public class SeriesResponse {
     private BigDecimal maxValue;
     private Integer createdBy;
     private String createdByUsername;
-    private LocalDateTime createdAt;
+    private ZonedDateTime createdAt;
 
     public static SeriesResponse fromEntity(Series series) {
         return new SeriesResponse(

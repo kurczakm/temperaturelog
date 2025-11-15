@@ -1,6 +1,7 @@
 import { Component, DestroyRef, inject, OnInit, OnDestroy, signal, computed, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, ChartOptions, ChartType, registerables } from 'chart.js';
@@ -12,6 +13,7 @@ import { SeriesService } from '../../services/series.service';
 import { MeasurementService } from '../../services/measurement.service';
 import { SeriesResponse } from '../../models/series.model';
 import { MeasurementResponse } from '../../models/measurement.model';
+import { Auth } from '../../auth/auth';
 
 // Register Chart.js components
 Chart.register(...registerables);
@@ -51,6 +53,9 @@ export class SeriesChart implements OnInit, OnDestroy {
   private seriesService = inject(SeriesService);
   private measurementService = inject(MeasurementService);
   private destroyRef = inject(DestroyRef);
+  private router = inject(Router);
+
+  auth = inject(Auth);
 
   @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
 
@@ -59,10 +64,10 @@ export class SeriesChart implements OnInit, OnDestroy {
   error = signal<string | null>(null);
   highlightedMeasurement = signal<TableMeasurement | null>(null);
 
-  selectedPeriod: TimePeriod = '7d';
-  customStartDate: string = '';
-  customEndDate: string = '';
-  currentDate = new Date();
+  selectedPeriod = signal<TimePeriod>('7d');
+  customStartDate = signal<string>('');
+  customEndDate = signal<string>('');
+  currentDate = signal(new Date());
 
   // Computed signals for reactive state
   hasSelectedSeries = computed(() =>
@@ -204,7 +209,7 @@ export class SeriesChart implements OnInit, OnDestroy {
     const now = new Date();
     let startDate: Date;
 
-    switch (this.selectedPeriod) {
+    switch (this.selectedPeriod()) {
       case '24h':
         startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
         break;
@@ -215,9 +220,9 @@ export class SeriesChart implements OnInit, OnDestroy {
         startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         break;
       case 'custom':
-        if (this.customStartDate && this.customEndDate) {
-          startDate = new Date(this.customStartDate);
-          const endDate = new Date(this.customEndDate);
+        if (this.customStartDate() && this.customEndDate()) {
+          startDate = new Date(this.customStartDate());
+          const endDate = new Date(this.customEndDate());
           return measurements.filter((m) => {
             const timestamp = new Date(m.timestamp);
             return timestamp >= startDate && timestamp <= endDate;
@@ -250,12 +255,18 @@ export class SeriesChart implements OnInit, OnDestroy {
   }
 
   onCustomDateChange(): void {
-    if (this.selectedPeriod !== 'custom') return;
+    if (this.selectedPeriod() !== 'custom') {
+      this.error.set(null);
+      return;
+    }
 
-    const start = this.customStartDate;
-    const end = this.customEndDate;
+    const start = this.customStartDate();
+    const end = this.customEndDate();
 
-    if (!start || !end) return;
+    if (!start || !end) {
+      this.error.set(null);
+      return;
+    }
 
     const startDate = new Date(start);
     const endDate = new Date(end);
@@ -387,7 +398,7 @@ export class SeriesChart implements OnInit, OnDestroy {
 
   printChart(): void {
     // Update current date before printing
-    this.currentDate = new Date();
+    this.currentDate.set(new Date());
 
     // Clear any highlights for cleaner print output
     const currentHighlight = this.highlightedMeasurement();
@@ -407,7 +418,7 @@ export class SeriesChart implements OnInit, OnDestroy {
   }
 
   getPeriodLabel(): string {
-    switch (this.selectedPeriod) {
+    switch (this.selectedPeriod()) {
       case '24h':
         return 'Last 24 Hours';
       case '7d':
@@ -417,9 +428,9 @@ export class SeriesChart implements OnInit, OnDestroy {
       case 'all':
         return 'All Time';
       case 'custom':
-        if (this.customStartDate && this.customEndDate) {
-          const start = new Date(this.customStartDate).toLocaleString();
-          const end = new Date(this.customEndDate).toLocaleString();
+        if (this.customStartDate() && this.customEndDate()) {
+          const start = new Date(this.customStartDate()).toLocaleString();
+          const end = new Date(this.customEndDate()).toLocaleString();
           return `Custom Range: ${start} to ${end}`;
         }
         return 'Custom Range';
@@ -438,5 +449,9 @@ export class SeriesChart implements OnInit, OnDestroy {
     }
 
     return selectedSeries.join(', ');
+  }
+
+  navigateToSignIn(): void {
+    this.router.navigate(['/signin']);
   }
 }

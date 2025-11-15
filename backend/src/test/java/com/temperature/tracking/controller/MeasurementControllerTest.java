@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -68,11 +69,11 @@ class MeasurementControllerTest {
 
     private MeasurementResponse testMeasurementResponse;
     private MeasurementRequest testMeasurementRequest;
-    private LocalDateTime testTimestamp;
+    private ZonedDateTime testTimestamp;
 
     @BeforeEach
     void setUp() {
-        testTimestamp = LocalDateTime.of(2025, 11, 8, 12, 0, 0);
+        testTimestamp = ZonedDateTime.from(LocalDateTime.of(2025, 11, 8, 12, 0, 0));
 
         testMeasurementResponse = new MeasurementResponse(
                 1,

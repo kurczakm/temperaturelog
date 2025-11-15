@@ -1,25 +1,39 @@
 <div class="series-chart-container">
   <div class="page-header">
     <h1 class="page-title">Series Chart</h1>
-    @if (!loading() && !error()) {
-      <button
-        type="button"
-        class="print-btn"
-        (click)="printChart()"
-        [disabled]="!hasSelectedSeries()"
-        [attr.aria-label]="hasSelectedSeries() ? 'Print chart and table' : 'Select at least one series to print'"
-        title="Print chart and table"
-      >
-        <span class="print-icon" aria-hidden="true">🖨️</span>
-        <span class="print-text">Print</span>
-      </button>
-    }
+    <div class="header-actions">
+      @if (!auth.isAuthenticated()) {
+        <button
+          type="button"
+          class="signin-btn"
+          (click)="navigateToSignIn()"
+          aria-label="Sign in to access more features"
+          title="Sign in to manage series and measurements"
+        >
+          <span class="signin-icon" aria-hidden="true">🔐</span>
+          <span class="signin-text">Sign In</span>
+        </button>
+      }
+      @if (!loading() && !error()) {
+        <button
+          type="button"
+          class="print-btn"
+          (click)="printChart()"
+          [disabled]="!hasSelectedSeries()"
+          [attr.aria-label]="hasSelectedSeries() ? 'Print chart and table' : 'Select at least one series to print'"
+          title="Print chart and table"
+        >
+          <span class="print-icon" aria-hidden="true">🖨️</span>
+          <span class="print-text">Print</span>
+        </button>
+      }
+    </div>
   </div>
 
   <!-- Print Info (only visible when printing) -->
   <div class="print-info">
     <div class="print-meta">
-      <p><strong>Generated:</strong> {{ currentDate | date:'full' }}</p>
+      <p><strong>Generated:</strong> {{ currentDate() | date:'full' }}</p>
       <p><strong>Time Period:</strong> {{ getPeriodLabel() }}</p>
       <p><strong>Selected Series:</strong> {{ getSelectedSeriesNames() }}</p>
     </div>
@@ -37,58 +51,70 @@
 
   <!-- Main Content -->
   @if (!loading() && !error()) {
+    <h2 class="visually-hidden">Chart Configuration</h2>
     <div class="chart-controls">
       <!-- Time Period Selector -->
-      <div class="control-section">
-        <h3>Time Period</h3>
-        <div class="period-buttons">
+      <section aria-labelledby="time-period-heading">
+        <div class="control-section">
+          <h3 id="time-period-heading">Time Period</h3>
+        <div class="period-buttons" role="group" aria-label="Time period selection">
           <button
             type="button"
-            [class.active]="selectedPeriod === '24h'"
-            (click)="selectedPeriod = '24h'; onPeriodChange()"
+            role="button"
+            [class.active]="selectedPeriod() === '24h'"
+            [attr.aria-pressed]="selectedPeriod() === '24h'"
+            (click)="selectedPeriod.set('24h'); onPeriodChange()"
           >
             Last 24 Hours
           </button>
           <button
             type="button"
-            [class.active]="selectedPeriod === '7d'"
-            (click)="selectedPeriod = '7d'; onPeriodChange()"
+            role="button"
+            [class.active]="selectedPeriod() === '7d'"
+            [attr.aria-pressed]="selectedPeriod() === '7d'"
+            (click)="selectedPeriod.set('7d'); onPeriodChange()"
           >
             Last 7 Days
           </button>
           <button
             type="button"
-            [class.active]="selectedPeriod === '30d'"
-            (click)="selectedPeriod = '30d'; onPeriodChange()"
+            role="button"
+            [class.active]="selectedPeriod() === '30d'"
+            [attr.aria-pressed]="selectedPeriod() === '30d'"
+            (click)="selectedPeriod.set('30d'); onPeriodChange()"
           >
             Last 30 Days
           </button>
           <button
             type="button"
-            [class.active]="selectedPeriod === 'all'"
-            (click)="selectedPeriod = 'all'; onPeriodChange()"
+            role="button"
+            [class.active]="selectedPeriod() === 'all'"
+            [attr.aria-pressed]="selectedPeriod() === 'all'"
+            (click)="selectedPeriod.set('all'); onPeriodChange()"
           >
             All Time
           </button>
           <button
             type="button"
-            [class.active]="selectedPeriod === 'custom'"
-            (click)="selectedPeriod = 'custom'; onPeriodChange()"
+            role="button"
+            [class.active]="selectedPeriod() === 'custom'"
+            [attr.aria-pressed]="selectedPeriod() === 'custom'"
+            (click)="selectedPeriod.set('custom'); onPeriodChange()"
           >
             Custom Range
           </button>
         </div>
 
         <!-- Custom Date Range -->
-        @if (selectedPeriod === 'custom') {
+        @if (selectedPeriod() === 'custom') {
           <div class="custom-date-range">
             <div class="date-input">
               <label for="startDate">Start Date:</label>
               <input
                 type="datetime-local"
                 id="startDate"
-                [(ngModel)]="customStartDate"
-                (change)="onCustomDateChange()"
+                [ngModel]="customStartDate()"
+                (ngModelChange)="customStartDate.set($event); onCustomDateChange()"
               />
             </div>
             <div class="date-input">
@@ -96,18 +122,20 @@
               <input
                 type="datetime-local"
                 id="endDate"
-                [(ngModel)]="customEndDate"
-                (change)="onCustomDateChange()"
+                [ngModel]="customEndDate()"
+                (ngModelChange)="customEndDate.set($event); onCustomDateChange()"
               />
             </div>
           </div>
         }
-      </div>
+        </div>
+      </section>
 
       <!-- Series Selection -->
-      <div class="control-section">
-        <div class="series-header">
-          <h3>Select Series ({{ selectedCount() }} selected)</h3>
+      <section aria-labelledby="series-selection-heading">
+        <div class="control-section">
+          <div class="series-header">
+            <h3 id="series-selection-heading">Select Series ({{ selectedCount() }} selected)</h3>
           <div class="selection-buttons">
             <button type="button" (click)="selectAllSeries()" class="small-btn">
               Select All
@@ -139,7 +167,8 @@
             }
           </div>
         }
-      </div>
+        </div>
+      </section>
     </div>
 
     <!-- Chart -->
