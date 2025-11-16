@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { SigninComponent } from './auth/signin/signin';
+import { ChangePasswordComponent } from './auth/change-password/change-password';
 import { SeriesListComponent } from './components/series-list/series-list.component';
 import { SeriesFormComponent } from './components/series-form/series-form.component';
 import { SeriesChart } from './components/series-chart/series-chart';
@@ -10,6 +11,7 @@ import { authGuard, adminGuard } from './guards/auth.guard';
 export const routes: Routes = [
   { path: '', redirectTo: '/signin', pathMatch: 'full' },
   { path: 'signin', component: SigninComponent },
+  { path: 'change-password', component: ChangePasswordComponent, canActivate: [authGuard] },
   { path: 'series', component: SeriesListComponent },
   { path: 'series/new', component: SeriesFormComponent, canActivate: [adminGuard] },
   { path: 'series/edit/:id', component: SeriesFormComponent, canActivate: [adminGuard] },

@@ -59,14 +59,12 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Order matters: specific rules must come before general wildcard rules
-                        // /change-password requires authentication, while other /auth/** endpoints are public
-                        .requestMatchers("/api/auth/change-password").authenticated()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/measurements/**", "/api/series/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/measurements/**", "/api/series/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/measurements/**", "/api/series/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/measurements/**", "/api/series/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/auth/change-password").authenticated()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

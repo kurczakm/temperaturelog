@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import {HttpClient, HttpHeaders} from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 
 export interface SignInRequest {
@@ -19,6 +19,11 @@ export interface AuthUser {
   role: string;
 }
 
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -31,6 +36,19 @@ export class Auth {
 
   constructor(private http: HttpClient) {
     this.loadStoredAuth();
+  }
+
+  private getAuthHeaders(): HttpHeaders {
+    const token = this.getToken();
+    const headers: { [key: string]: string } = {
+      'Content-Type': 'application/json'
+    };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    return new HttpHeaders(headers);
   }
 
   signIn(credentials: SignInRequest): Observable<SignInResponse> {
@@ -47,6 +65,13 @@ export class Auth {
     localStorage.removeItem('role');
     this.currentUser.set(null);
     this.isAuthenticated.set(false);
+  }
+
+  changePassword(request: ChangePasswordRequest): Observable<string> {
+    return this.http.post(`${this.API_URL}/change-password`, request, {
+      headers: this.getAuthHeaders(),
+      responseType: 'text'
+    });
   }
 
   getToken(): string | null {

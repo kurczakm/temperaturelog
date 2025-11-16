@@ -19,6 +19,9 @@
             {{ auth.currentUser()?.role }}
           </span>
         </div>
+        <a routerLink="/change-password" class="btn-change-password">
+          Change Password
+        </a>
         <button class="btn-signout" (click)="signOut()">
           Sign Out
         </button>
