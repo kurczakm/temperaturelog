@@ -16,7 +16,6 @@ CREATE TABLE series (
     description TEXT,
     color VARCHAR(20),
     icon VARCHAR(50),
-    -- Min/max values allow up to 3 integer digits and 2 decimal places (e.g., 999.99), matching measurement value precision
     min_value NUMERIC(5,2),
     max_value NUMERIC(5,2),
     created_by INT REFERENCES users(id),
