@@ -60,6 +60,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/v3/api-docs/**", "/swagger-ui/**", "/api/series/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/measurements/**", "/api/series/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/measurements/**", "/api/series/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/measurements/**", "/api/series/**").hasRole("ADMIN")
