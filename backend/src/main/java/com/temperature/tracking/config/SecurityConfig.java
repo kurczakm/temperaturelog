@@ -3,6 +3,7 @@ package com.temperature.tracking.config;
 import com.temperature.tracking.security.JwtAuthenticationFilter;
 import com.temperature.tracking.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -33,6 +34,8 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomUserDetailsService userDetailsService;
+    @Value("${cors.allowed-origin}")
+    private String allowedOrigin;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -77,7 +80,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+        configuration.setAllowedOrigins(List.of(allowedOrigin));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         configuration.setExposedHeaders(List.of("Authorization"));
