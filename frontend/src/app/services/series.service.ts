@@ -3,12 +3,13 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { SeriesRequest, SeriesResponse } from '../models/series.model';
 import { Auth } from '../auth/auth';
+import {environment} from "../../environments/environment";
 
 @Injectable({
   providedIn: 'root',
 })
 export class SeriesService {
-  private readonly API_URL = 'http://localhost:8081/api/series';
+  private readonly API_URL = environment.URL + '/api/series';
 
   constructor(
     private http: HttpClient,

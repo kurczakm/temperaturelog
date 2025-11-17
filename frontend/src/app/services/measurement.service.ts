@@ -3,12 +3,13 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { MeasurementRequest, MeasurementResponse } from '../models/measurement.model';
 import { Auth } from '../auth/auth';
+import {environment} from "../../environments/environment";
 
 @Injectable({
   providedIn: 'root',
 })
 export class MeasurementService {
-  private readonly API_URL = 'http://localhost:8081/api/measurements';
+  private readonly API_URL = environment.URL + '/api/measurements';
 
   constructor(
     private http: HttpClient,

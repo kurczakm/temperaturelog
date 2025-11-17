@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
+import {environment} from "../../environments/environment";
 
 export interface SignInRequest {
   username: string;
@@ -28,7 +29,7 @@ export interface ChangePasswordRequest {
   providedIn: 'root',
 })
 export class Auth {
-  private readonly API_URL = 'http://localhost:8081/api/auth';
+  private readonly API_URL = environment.URL + '/api/auth';
   private readonly TOKEN_KEY = 'jwt_token';
 
   currentUser = signal<AuthUser | null>(null);
